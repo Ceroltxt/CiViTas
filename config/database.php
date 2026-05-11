@@ -95,7 +95,8 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
+            'schema' => 'laravel',
+            'search_path' => 'public, laravel',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
@@ -128,7 +129,7 @@ return [
     */
 
     'migrations' => [
-        'table' => 'migrations',
+        'table' => 'laravel.migrations',
         'update_date_on_publish' => true,
     ],
 
