@@ -27,5 +27,5 @@ yarn-error.log
 /.vscode
 /.zed
 npm-debug-log
-/.docker
+
 echo ".bash_history" >> .gitignore.bash_history
