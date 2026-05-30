@@ -1,13 +1,6 @@
 /.phpunit.cache
-/bootstrap/ssr
 /node_modules
-/public/build
-/public/fonts-manifest.dev.json
-/public/hot
 /public/storage
-/resources/js/actions
-/resources/js/routes
-/resources/js/wayfinder
 /storage/*.key
 /storage/pail
 /vendor
@@ -18,14 +11,10 @@
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
 /auth.json
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
-npm-debug-log
-
-echo ".bash_history" >> .gitignore.bash_history
+.bash_history

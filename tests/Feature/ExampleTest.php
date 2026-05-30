@@ -1,7 +1,18 @@
 <?php
 
-test('returns a successful response', function () {
-    $response = $this->get(route('home'));
+test('health endpoint responds successfully', function () {
+    $response = $this->get('/up');
 
     $response->assertOk();
+});
+
+test('api status returns application metadata', function () {
+    $response = $this->getJson(route('status'));
+
+    $response
+        ->assertOk()
+        ->assertJsonStructure(['name', 'environment', 'status'])
+        ->assertJson([
+            'status' => 'ok',
+        ]);
 });
