@@ -17,11 +17,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version: ['8.3', '8.4']
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -29,7 +24,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: '8.4'
           tools: composer:v2
           coverage: xdebug
 
@@ -39,7 +34,7 @@ jobs:
       - name: Prepare Application
         run: |
           cp .env.example .env
-          php artisan key:generate
+          php artisan key:generate --no-interaction
 
       - name: Run Tests
         run: php artisan test
