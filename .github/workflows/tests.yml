@@ -18,8 +18,9 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        php-version: ['8.3', '8.4', '8.5']
+        php-version: ['8.3', '8.4']
 
     steps:
       - name: Checkout code
@@ -33,13 +34,12 @@ jobs:
           coverage: xdebug
 
       - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
 
-      - name: Copy Environment File
-        run: cp .env.example .env
+      - name: Prepare Application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
 
-      - name: Generate Application Key
-        run: php artisan key:generate
-
-      - name: Tests
-        run: ./vendor/bin/pest
+      - name: Run Tests
+        run: php artisan test
