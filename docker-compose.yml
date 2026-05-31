@@ -22,23 +22,13 @@ services:
       dockerfile: Dockerfile 
     container_name: laravel
     environment: 
-      APP_ENV: production 
-      DB_CONNECTION: pgsql 
-      # DB_HOST: ${DB_HOST}
-      # DB_PORT: ${DB_PORT}
-      # DB_DATABASE: ${DB_DATABASE} 
-      # DB_USERNAME: ${DB_USERNAME}
-      # DB_PASSWORD: ${DB_PASSWORD}
+      APP_ENV: local
+      APP_DEBUG: true
       REDIS_HOST: redis 
       REDIS_PORT: 6379 
-      CACHE_DRIVER: redis 
+      CACHE_STORE: redis 
       SESSION_DRIVER: redis 
       QUEUE_CONNECTION: redis 
-      # FILESYSTEM_DISK: s3 
-      # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID} 
-      # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} 
-      # AWS_DEFAULT_REGION: us-east-1 
-      # AWS_BUCKET: nome-do-bucket  --> A ser ativado quando criamos a EC2 e o S3 bucket 
     volumes: 
       - .:/var/www/html
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
