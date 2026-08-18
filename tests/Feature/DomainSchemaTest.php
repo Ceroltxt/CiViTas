@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\Identity\Funcionario;
 use App\Models\Organization\Cargo;
 use App\Models\Organization\Departamento;
-use App\Models\Identity\Funcionario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

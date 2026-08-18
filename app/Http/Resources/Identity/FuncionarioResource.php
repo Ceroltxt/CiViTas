@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources\Identity;
 
+use App\Models\Identity\Funcionario;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Identity\Funcionario
+ * @mixin Funcionario
  */
 class FuncionarioResource extends JsonResource
 {
