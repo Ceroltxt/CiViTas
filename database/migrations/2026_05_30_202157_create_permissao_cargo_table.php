@@ -18,8 +18,20 @@ return new class extends Migration
             $table->timestamp('data_expiracao')->nullable();
             $table->timestamps();
 
-            $table->foreignId('ID_cargo')->constrained('cargo', 'ID_cargo')->onDelete('set null');
-            $table->foreignId('ID_permissao')->constrained('permissoes', 'ID_permissao')->onDelete('set null');
+            $table->unsignedInteger('ID_cargo');
+            $table->unsignedInteger('ID_permissao');
+
+            $table->foreign('ID_cargo')
+                ->references('ID_cargo')
+                ->on('cargo')
+                ->cascadeOnDelete();
+
+            $table->foreign('ID_permissao')
+                ->references('ID_permissao')
+                ->on('permissoes')
+                ->cascadeOnDelete();
+
+            $table->unique(['ID_cargo', 'ID_permissao']);
         });
     }
 

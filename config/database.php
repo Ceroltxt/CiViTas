@@ -95,9 +95,12 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'schema' => 'laravel',
-            'search_path' => 'public, laravel',
+            'schema' => env('DB_SCHEMA', 'public'),
+            'search_path' => env('DB_SEARCH_PATH', 'public'),
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'options' => extension_loaded('pdo_pgsql') ? array_filter([
+                PDO::ATTR_EMULATE_PREPARES => filter_var(env('DB_EMULATE_PREPARES', false), FILTER_VALIDATE_BOOL) ?: null,
+            ]) : [],
         ],
 
         'sqlsrv' => [
@@ -129,7 +132,7 @@ return [
     */
 
     'migrations' => [
-        'table' => 'laravel.migrations',
+        'table' => env('DB_MIGRATIONS_TABLE', 'migrations'),
         'update_date_on_publish' => true,
     ],
 

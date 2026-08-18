@@ -18,16 +18,22 @@ return new class extends Migration
             $table->date('data_nascimento');
             $table->string('email')->unique();
             $table->string('CPF')->unique();
-            $table->integer('pontos_totats')->default(0);
-
+            $table->unsignedInteger('pontos_totais')->default(0);
             $table->string('senha');
-
             $table->timestamps();
-            //chaves estrangeirass
-            $table->foreignId('ID_departamento')->constrained('departamento', 'ID_departamento')->onDelete('set null');
 
-            $table->foreignId('ID_cargo')->constrained('cargo', 'ID_cargo')->onDelete('set null');
+            $table->unsignedInteger('ID_departamento')->nullable();
+            $table->unsignedInteger('ID_cargo')->nullable();
 
+            $table->foreign('ID_departamento')
+                ->references('ID_departamento')
+                ->on('departamento')
+                ->nullOnDelete();
+
+            $table->foreign('ID_cargo')
+                ->references('ID_cargo')
+                ->on('cargo')
+                ->nullOnDelete();
         });
     }
 

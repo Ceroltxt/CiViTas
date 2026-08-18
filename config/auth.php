@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Identity\Funcionario;
 
 return [
 
@@ -42,6 +42,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
     ],
 
     /*
@@ -64,7 +69,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', Funcionario::class),
         ],
 
         // 'users' => [

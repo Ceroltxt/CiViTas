@@ -12,11 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('permissao_cargo_funcionario', function (Blueprint $table) {
-            $table->foreignId('ID_CP')->constrained('permissao_cargo', 'ID_CP')->onDelete('set null');
-            $table->foreignId('matricula_funcionario')->constrained('funcionario', 'matricula_funcionario')->onDelete(' set null');
+            $table->unsignedInteger('ID_CP');
+            $table->unsignedInteger('matricula_funcionario');
             $table->timestamps();
 
             $table->primary(['ID_CP', 'matricula_funcionario']);
+
+            $table->foreign('ID_CP')
+                ->references('ID_CP')
+                ->on('permissao_cargo')
+                ->cascadeOnDelete();
+
+            $table->foreign('matricula_funcionario')
+                ->references('matricula_funcionario')
+                ->on('funcionario')
+                ->cascadeOnDelete();
         });
     }
 

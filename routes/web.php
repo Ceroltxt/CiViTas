@@ -2,4 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/api/status');
+Route::redirect('/', '/login');
+
+Route::view('/login', 'login')->name('login');

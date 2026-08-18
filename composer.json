@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.4",
         "laravel/framework": "^13.7",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
@@ -61,6 +62,12 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@php artisan test"
+        ],
+        "migrate": [
+            "@php artisan migrate"
+        ],
+        "migrate:fresh": [
+            "@php artisan migrate:fresh"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

@@ -7,12 +7,21 @@ test('health endpoint responds successfully', function () {
 });
 
 test('api status returns application metadata', function () {
-    $response = $this->getJson(route('status'));
+    $response = $this->getJson(route('api.status'));
 
     $response
         ->assertOk()
-        ->assertJsonStructure(['name', 'environment', 'status'])
+        ->assertJsonStructure([
+            'name',
+            'environment',
+            'status',
+            'database' => ['connection', 'connected'],
+        ])
         ->assertJson([
             'status' => 'ok',
+            'database' => [
+                'connection' => 'sqlite',
+                'connected' => true,
+            ],
         ]);
 });

@@ -2,22 +2,35 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Identity\Funcionario;
+use App\Models\Organization\Cargo;
+use App\Models\Organization\Departamento;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $departamento = Departamento::query()->firstOrCreate(
+            ['nome_departamento' => 'Engenharia'],
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $cargo = Cargo::query()->firstOrCreate(
+            ['nome_cargo' => 'Desenvolvedor'],
+        );
+
+        Funcionario::query()->updateOrCreate(
+            ['email' => 'ana@civitas.test'],
+            [
+                'nome' => 'Ana',
+                'sobrenome' => 'Silva',
+                'data_nascimento' => '1995-04-12',
+                'CPF' => '12345678901',
+                'pontos_totais' => 10,
+                'senha' => 'secret-password',
+                'ID_departamento' => $departamento->getKey(),
+                'ID_cargo' => $cargo->getKey(),
+            ],
+        );
     }
 }
