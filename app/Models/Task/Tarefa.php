@@ -15,8 +15,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'nome',
     'descricao',
     'pontos_base',
+    'prioridade',
+    'data_inicio',
+    'data_prazo',
+    'data_conclusao',
+    'pessoal',
+    'tipo',
+    'complexidade',
+    'categoria',
+    'programa',
     'matricula_gestor',
     'ID_projeto',
+    'ID_equipe',
     'ID_status_tarefa',
 ])]
 class Tarefa extends Model
@@ -32,6 +42,10 @@ class Tarefa extends Model
     {
         return [
             'pontos_base' => 'integer',
+            'data_inicio' => 'date',
+            'data_prazo' => 'date',
+            'data_conclusao' => 'date',
+            'pessoal' => 'boolean',
         ];
     }
 
@@ -43,6 +57,11 @@ class Tarefa extends Model
     public function projeto(): BelongsTo
     {
         return $this->belongsTo(Projeto::class, 'ID_projeto', 'ID_projeto');
+    }
+
+    public function equipe(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Team\Equipe::class, 'ID_equipe', 'ID_equipe');
     }
 
     public function status(): BelongsTo

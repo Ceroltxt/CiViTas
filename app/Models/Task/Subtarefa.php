@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['nome', 'concluida', 'ID_tarefa', 'matricula_colaborador'])]
+#[Fillable(['nome', 'concluida', 'data_prazo', 'ID_tarefa', 'matricula_colaborador'])]
 class Subtarefa extends Model
 {
     protected $table = 'subtarefa';
@@ -21,6 +21,7 @@ class Subtarefa extends Model
     {
         return [
             'concluida' => 'boolean',
+            'data_prazo' => 'date',
         ];
     }
 

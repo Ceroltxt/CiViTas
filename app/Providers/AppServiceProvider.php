@@ -3,7 +3,17 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Gate;
+use App\Models\Identity\Funcionario;
+use App\Models\Project\Projeto;
+use App\Models\Task\Tarefa;
+use App\Models\Team\Equipe;
+use App\Policies\Identity\FuncionarioPolicy;
+use App\Policies\Project\ProjetoPolicy;
+use App\Policies\Task\TarefaPolicy;
+use App\Policies\Team\EquipePolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -23,7 +33,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->registerPolicies();
         $this->configureDefaults();
+    }
+
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Tarefa::class, TarefaPolicy::class);
+        Gate::policy(Projeto::class, ProjetoPolicy::class);
+        Gate::policy(Equipe::class, EquipePolicy::class);
+        Gate::policy(Funcionario::class, FuncionarioPolicy::class);
     }
 
     /**
@@ -31,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureDefaults(): void
     {
+        JsonResource::withoutWrapping();
+
         Date::use(CarbonImmutable::class);
 
         DB::prohibitDestructiveCommands(

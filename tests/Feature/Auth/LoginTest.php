@@ -40,5 +40,5 @@ test('authenticated funcionario can fetch profile', function () {
 
     $this->getJson(route('api.auth.me'))
         ->assertOk()
-        ->assertJsonPath('data.email', 'ana@civitas.test');
+        ->assertJsonPath('email', 'ana@civitas.test');
 });

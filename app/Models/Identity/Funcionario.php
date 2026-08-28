@@ -2,6 +2,8 @@
 
 namespace App\Models\Identity;
 
+use App\Domain\Authorization\AppProfile;
+use App\Models\Authorization\Permissao;
 use App\Models\Authorization\PermissaoCargo;
 use App\Models\Gamification\PontosUsuario;
 use App\Models\Organization\Cargo;
@@ -12,10 +14,12 @@ use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Collection as SupportCollection;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable([
@@ -113,5 +117,39 @@ class Funcionario extends Authenticatable
     public function pontos(): HasMany
     {
         return $this->hasMany(PontosUsuario::class, 'matricula_funcionario', 'matricula_funcionario');
+    }
+
+    public function profile(): AppProfile
+    {
+        $this->loadMissing('cargo');
+
+        return AppProfile::fromCargoName($this->cargo?->nome_cargo);
+    }
+
+    /**
+     * Verifica slug em `permissoes` via cargo (e overrides futuros em permissao_cargo_funcionario).
+     */
+    public function hasPermission(string $slug): bool
+    {
+        return $this->permissionSlugs()->contains($slug);
+    }
+
+    /**
+     * @return SupportCollection<int, string>
+     */
+    public function permissionSlugs(): SupportCollection
+    {
+        $this->loadMissing('cargo.permissoes');
+
+        if ($this->cargo === null) {
+            return collect();
+        }
+
+        /** @var Collection<int, Permissao> $permissoes */
+        $permissoes = $this->cargo->permissoes()
+            ->wherePivot('ativo', true)
+            ->get();
+
+        return $permissoes->pluck('nome_permissao');
     }
 }

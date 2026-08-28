@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'nome',
+    'descricao',
+    'prioridade',
     'data_inicio',
     'data_previsao_fim',
     'data_conclusao',
