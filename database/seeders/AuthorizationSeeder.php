@@ -62,7 +62,7 @@ class AuthorizationSeeder extends Seeder
                     'ID_permissao' => $permissionId,
                 ],
                 [
-                    'ativo' => true,
+                    'ativo' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('true') : true,
                     'data_atribuicao' => now(),
                     'updated_at' => now(),
                     'created_at' => now(),
