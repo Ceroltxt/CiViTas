@@ -6,6 +6,8 @@ use App\Models\Identity\Funcionario;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+use App\Support\Frontend\AppRoleResolver;
+
 /**
  * @mixin Funcionario
  */
@@ -22,6 +24,8 @@ class FuncionarioResource extends JsonResource
             'sobrenome' => $this->sobrenome,
             'email' => $this->email,
             'pontos_totais' => $this->pontos_totais,
+            'app_role' => AppRoleResolver::appRoleKey($this->resource),
+            'role_label' => AppRoleResolver::resolveFromFuncionario($this->resource),
             'departamento' => $this->whenLoaded('departamento', fn () => [
                 'id' => $this->departamento?->ID_departamento,
                 'nome' => $this->departamento?->nome_departamento,
