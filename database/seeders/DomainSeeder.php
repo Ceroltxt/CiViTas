@@ -70,7 +70,7 @@ class DomainSeeder extends Seeder
         Funcionario::query()->updateOrCreate(
             ['email' => 'admin@civitas.test'],
             [
-                'nome' => 'Roberto',
+                'nome' => 'jUrandiro',
                 'sobrenome' => 'Admin',
                 'data_nascimento' => '1988-06-20',
                 'CPF' => '11122233344',

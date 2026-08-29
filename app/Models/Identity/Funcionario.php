@@ -147,7 +147,7 @@ class Funcionario extends Authenticatable
 
         /** @var Collection<int, Permissao> $permissoes */
         $permissoes = $this->cargo->permissoes()
-            ->wherePivot('ativo', true)
+            ->wherePivot('ativo', \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? \Illuminate\Support\Facades\DB::raw('true') : true)
             ->get();
 
         return $permissoes->pluck('nome_permissao');
