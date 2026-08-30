@@ -115,4 +115,54 @@ class TaskController extends Controller
 
         return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas']));
     }
+
+    public function show(Tarefa $task): TaskResource
+    {
+        Gate::authorize('view', $task);
+
+        return new TaskResource($task->load(['status', 'colaboradores', 'subtarefas', 'historico', 'projeto', 'equipe']));
+    }
+
+    public function toggleSubtask(Request $request, Tarefa $task, Subtarefa $subtask): TaskResource
+    {
+        Gate::authorize('update', $task);
+
+        /** @var Funcionario $funcionario */
+        $funcionario = $request->user();
+
+        $subtask->concluida = ! $subtask->concluida;
+        $subtask->save();
+
+        $statusMsg = $subtask->concluida ? 'concluída' : 'reaberta';
+
+        HistoricoTarefa::query()->create([
+            'acao' => "Subtarefa {$statusMsg}",
+            'detalhes' => "Subtarefa '{$subtask->nome}' foi {$statusMsg} por {$funcionario->nome}",
+            'ID_tarefa' => $task->ID_tarefa,
+            'matricula_funcionario' => $funcionario->matricula_funcionario,
+        ]);
+
+        return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas', 'historico']));
+    }
+
+    public function addComment(Request $request, Tarefa $task): TaskResource
+    {
+        Gate::authorize('update', $task);
+
+        $request->validate([
+            'comentario' => ['required', 'string', 'max:1000'],
+        ]);
+
+        /** @var Funcionario $funcionario */
+        $funcionario = $request->user();
+
+        HistoricoTarefa::query()->create([
+            'acao' => 'Comentário adicionado',
+            'detalhes' => $request->input('comentario'),
+            'ID_tarefa' => $task->ID_tarefa,
+            'matricula_funcionario' => $funcionario->matricula_funcionario,
+        ]);
+
+        return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas', 'historico']));
+    }
 }
