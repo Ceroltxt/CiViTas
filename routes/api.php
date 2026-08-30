@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/teams', [TeamController::class, 'index'])->name('teams');
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
+    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
 
     Route::prefix('board')->name('board.')->group(function () {
