@@ -10,8 +10,28 @@ use App\Http\Resources\Identity\FuncionarioResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use App\Application\Identity\Auth\RegisterAction;
+use App\Http\Requests\Identity\RegisterRequest;
+
 class AuthController extends Controller
 {
+    public function register(RegisterRequest $request, RegisterAction $registerAction): JsonResponse
+    {
+        $result = $registerAction->execute(
+            nome: $request->validated('nome'),
+            email: $request->validated('email'),
+            password: $request->validated('password'),
+            sobrenome: $request->validated('sobrenome'),
+            nomeDepartamento: $request->validated('departamento'),
+            cpf: $request->validated('CPF'),
+        );
+
+        return response()->json([
+            'message' => 'Conta criada com sucesso! Faça seu login para acessar o sistema.',
+            'funcionario' => new FuncionarioResource($result['funcionario']),
+        ], 201);
+    }
+
     public function login(LoginRequest $request, LoginAction $loginAction): JsonResponse
     {
         $result = $loginAction->execute(

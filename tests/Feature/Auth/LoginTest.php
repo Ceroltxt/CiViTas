@@ -35,6 +35,15 @@ test('funcionario can login', function () {
     ])->assertOk()->assertJsonStructure(['token', 'token_type', 'funcionario']);
 });
 
+test('funcionario can login using email without .test suffix', function () {
+    createFuncionarioForAuth();
+
+    $this->postJson(route('api.auth.login'), [
+        'email' => 'ana@civitas',
+        'password' => 'secret-password',
+    ])->assertOk()->assertJsonStructure(['token', 'token_type', 'funcionario']);
+});
+
 test('authenticated funcionario can fetch profile', function () {
     Sanctum::actingAs(createFuncionarioForAuth());
 
