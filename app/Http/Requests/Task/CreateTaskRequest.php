@@ -24,6 +24,7 @@ class CreateTaskRequest extends FormRequest
             'ID_projeto' => ['nullable', 'integer', 'exists:projeto,ID_projeto'],
             'ID_equipe' => ['nullable', 'integer', 'exists:equipe,ID_equipe'],
             'matricula_colaborador' => ['nullable'],
+            'pessoal' => ['nullable', 'boolean'],
             'subtarefas' => ['nullable', 'array'],
             'subtarefas.*' => ['string', 'max:255'],
         ];

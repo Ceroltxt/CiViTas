@@ -36,6 +36,12 @@ class TaskController extends Controller
         $gestor = $request->user();
 
         $statusAFazer = StatusTarefa::query()->where('nome_status', 'a-fazer')->firstOrFail();
+        $colaboradores = array_filter((array) $request->validated('matricula_colaborador', []));
+        $isPessoal = $request->boolean('pessoal', false) || empty($colaboradores);
+
+        if (empty($colaboradores)) {
+            $colaboradores = [$gestor->matricula_funcionario];
+        }
 
         $tarefa = Tarefa::query()->create([
             'nome' => $request->validated('nome'),
@@ -48,17 +54,14 @@ class TaskController extends Controller
                 'media' => 100,
                 default => 50,
             },
-            'pessoal' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('false') : false,
+            'pessoal' => $isPessoal,
             'matricula_gestor' => $gestor->matricula_funcionario,
             'ID_projeto' => $request->validated('ID_projeto'),
             'ID_equipe' => $request->validated('ID_equipe'),
             'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
         ]);
 
-        $colaboradores = array_filter((array) $request->validated('matricula_colaborador', []));
-        if (! empty($colaboradores)) {
-            $tarefa->colaboradores()->syncWithoutDetaching($colaboradores);
-        }
+        $tarefa->colaboradores()->syncWithoutDetaching($colaboradores);
 
         $subtarefas = (array) $request->validated('subtarefas', []);
         foreach ($subtarefas as $sub) {
@@ -66,15 +69,15 @@ class TaskController extends Controller
                 Subtarefa::query()->create([
                     'nome' => trim($sub),
                     'ID_tarefa' => $tarefa->ID_tarefa,
-                    'concluida' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('false') : false,
-                    'matricula_colaborador' => ! empty($colaboradores) ? reset($colaboradores) : null,
+                    'concluida' => false,
+                    'matricula_colaborador' => reset($colaboradores) ?: $gestor->matricula_funcionario,
                 ]);
             }
         }
 
         HistoricoTarefa::query()->create([
-            'acao' => 'Tarefa criada e atribuída',
-            'detalhes' => "Tarefa criada pelo gestor {$gestor->nome}",
+            'acao' => $isPessoal ? 'Tarefa pessoal criada' : 'Tarefa criada e atribuída',
+            'detalhes' => $isPessoal ? "Tarefa pessoal criada por {$gestor->nome}" : "Tarefa criada pelo gestor {$gestor->nome}",
             'ID_tarefa' => $tarefa->ID_tarefa,
             'matricula_funcionario' => $gestor->matricula_funcionario,
         ]);
