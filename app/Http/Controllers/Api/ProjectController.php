@@ -8,6 +8,7 @@ use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\Frontend\ProjectProgressResource;
 use App\Models\Identity\Funcionario;
 use App\Models\Project\Projeto;
+use App\Models\Team\Equipe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -33,17 +34,32 @@ class ProjectController extends Controller
         $user = $request->user();
         $data = $request->validated();
 
-        $projeto = Projeto::query()->create([
-            'nome' => $data['nome'],
-            'descricao' => $data['descricao'] ?? null,
-            'prioridade' => $data['prioridade'] ?? 'media',
-            'data_inicio' => $data['data_inicio'] ?? now(),
-            'data_previsao_fim' => $data['data_previsao_fim'] ?? null,
-            'ativo' => true,
-            'ID_matricula_admin' => $user->matricula_funcionario,
-        ]);
+        $projeto = DB::transaction(function () use ($data, $user) {
+            $proj = Projeto::query()->create([
+                'nome' => $data['nome'],
+                'descricao' => $data['descricao'] ?? null,
+                'prioridade' => $data['prioridade'] ?? 'media',
+                'data_inicio' => $data['data_inicio'] ?? now(),
+                'data_previsao_fim' => $data['data_previsao_fim'] ?? null,
+                'ativo' => true,
+                'ID_matricula_admin' => $user->matricula_funcionario,
+            ]);
 
-        return (new ProjectProgressResource($projeto->fresh(['equipes.membros', 'tarefas'])))
+            if (! empty($data['gestores'])) {
+                foreach ($data['gestores'] as $matriculaGestor) {
+                    $equipe = Equipe::query()->create([
+                        'nome' => 'Equipe ' . $proj->nome,
+                        'matricula_gestor' => $matriculaGestor,
+                        'pontos_totais' => 0,
+                    ]);
+                    $proj->equipes()->attach($equipe->ID_equipe);
+                }
+            }
+
+            return $proj;
+        });
+
+        return (new ProjectProgressResource($projeto->fresh(['equipes.membros', 'equipes.gestor', 'tarefas'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -75,7 +91,7 @@ class ProjectController extends Controller
 
         $project->save();
 
-        return new ProjectProgressResource($project->fresh(['equipes.membros', 'tarefas']));
+        return new ProjectProgressResource($project->fresh(['equipes.membros', 'equipes.gestor', 'tarefas']));
     }
 
     public function destroy(Projeto $project): JsonResponse

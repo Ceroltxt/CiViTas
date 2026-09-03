@@ -22,6 +22,8 @@ class CreateProjectRequest extends FormRequest
             'prioridade' => ['sometimes', 'required', 'string', 'in:alta,media,baixa'],
             'data_inicio' => ['nullable', 'date'],
             'data_previsao_fim' => ['nullable', 'date'],
+            'gestores' => ['nullable', 'array'],
+            'gestores.*' => ['integer', 'exists:funcionario,matricula_funcionario'],
         ];
     }
 }
