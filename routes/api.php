@@ -41,6 +41,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/teams', [TeamController::class, 'index'])->name('teams');
+    Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::put('/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+    Route::delete('/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
+    Route::get('/gestores', [TeamController::class, 'gestores'])->name('gestores');
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
