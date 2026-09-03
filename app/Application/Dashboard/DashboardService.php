@@ -101,11 +101,20 @@ class DashboardService
         return Projeto::query()
             ->where('ativo', true)
             ->where(function ($query) use ($funcionario): void {
-                $query->where('ID_matricula_admin', $funcionario->matricula_funcionario)
+                $query
+                    // Admin criador do projeto
+                    ->where('ID_matricula_admin', $funcionario->matricula_funcionario)
+                    // Gestor de alguma equipe vinculada ao projeto
+                    ->orWhereHas(
+                        'equipes',
+                        fn ($q) => $q->where('equipe.matricula_gestor', $funcionario->matricula_funcionario),
+                    )
+                    // Membro de alguma equipe vinculada ao projeto
                     ->orWhereHas(
                         'equipes.membros',
                         fn ($q) => $q->where('equipe_funcionario.matricula_funcionario', $funcionario->matricula_funcionario),
                     )
+                    // Atribuído como colaborador em tarefas do projeto
                     ->orWhereHas(
                         'tarefas.colaboradores',
                         fn ($q) => $q->where('tarefa_funcionario.matricula_colaborador', $funcionario->matricula_funcionario),
