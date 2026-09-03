@@ -168,4 +168,70 @@ class TaskController extends Controller
 
         return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas', 'historico']));
     }
+
+    public function update(\App\Http\Requests\Task\UpdateTaskRequest $request, Tarefa $task): TaskResource
+    {
+        Gate::authorize('update', $task);
+
+        /** @var Funcionario $funcionario */
+        $funcionario = $request->user();
+
+        $data = $request->validated();
+
+        if (array_key_exists('nome', $data)) {
+            $task->nome = $data['nome'];
+        }
+        if (array_key_exists('descricao', $data)) {
+            $task->descricao = $data['descricao'];
+        }
+        if (array_key_exists('prioridade', $data)) {
+            $task->prioridade = $data['prioridade'];
+            $task->pontos_base = match ($data['prioridade']) {
+                'alta' => 200,
+                'media' => 100,
+                default => 50,
+            };
+        }
+        if (array_key_exists('data_prazo', $data)) {
+            $task->data_prazo = $data['data_prazo'];
+        }
+        if (array_key_exists('ID_projeto', $data)) {
+            $task->ID_projeto = $data['ID_projeto'];
+        }
+        if (array_key_exists('ID_equipe', $data)) {
+            $task->ID_equipe = $data['ID_equipe'];
+        }
+
+        $task->save();
+
+        if (array_key_exists('matricula_colaborador', $data)) {
+            $colaboradores = array_filter((array) $data['matricula_colaborador']);
+            if (! empty($colaboradores)) {
+                $task->colaboradores()->sync($colaboradores);
+            }
+        }
+
+        HistoricoTarefa::query()->create([
+            'acao' => 'Tarefa atualizada',
+            'detalhes' => "Dados da tarefa atualizados por {$funcionario->nome}",
+            'ID_tarefa' => $task->ID_tarefa,
+            'matricula_funcionario' => $funcionario->matricula_funcionario,
+        ]);
+
+        return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas', 'historico']));
+    }
+
+    public function destroy(Tarefa $task): JsonResponse
+    {
+        Gate::authorize('delete', $task);
+
+        DB::transaction(function () use ($task): void {
+            $task->subtarefas()->delete();
+            $task->historico()->delete();
+            $task->colaboradores()->detach();
+            $task->delete();
+        });
+
+        return response()->json(['message' => 'Tarefa excluída com sucesso.'], 200);
+    }
 }
