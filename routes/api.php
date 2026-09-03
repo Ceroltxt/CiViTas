@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\StatusController;
+use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TeamController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/ranking', [DashboardController::class, 'ranking'])->name('ranking');
         Route::get('/projects', [DashboardController::class, 'projects'])->name('projects');
     });
+
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
     Route::get('/teams', [TeamController::class, 'index'])->name('teams');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
