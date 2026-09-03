@@ -140,6 +140,9 @@ trait ResolvesFuncionarioAccess
      * Gestor edita tarefas dos projetos/equipes que administra.
      * Colaborador edita tarefas atribuídas ou pessoais.
      */
+    /**
+     * Permissão para alterar status, marcar subtarefa e adicionar comentário (Atribuído, Gestor, Criador, Admin).
+     */
     protected function canMutateTaskInScope(Funcionario $funcionario, Tarefa $tarefa): bool
     {
         if ($this->isAdmin($funcionario)) {
@@ -160,5 +163,32 @@ trait ResolvesFuncionarioAccess
 
         return $this->isAssignedToTask($funcionario, $tarefa)
             || $this->isTaskGestor($funcionario, $tarefa);
+    }
+
+    /**
+     * Permissão estrita para Editar Título/Descrição ou Excluir a Tarefa: Apenas o criador, Gestor do projeto/equipe ou Admin.
+     */
+    protected function canEditOrDeleteTask(Funcionario $funcionario, Tarefa $tarefa): bool
+    {
+        if ($this->isAdmin($funcionario)) {
+            return true;
+        }
+
+        $tarefa->loadMissing(['projeto', 'equipe']);
+
+        if ($this->ownsPersonalTask($funcionario, $tarefa)) {
+            return true;
+        }
+
+        if ($this->isTaskGestor($funcionario, $tarefa)) {
+            return true;
+        }
+
+        if ($this->isGestor($funcionario)) {
+            return $this->managesProject($funcionario, $tarefa->projeto)
+                || $this->managesTeam($funcionario, $tarefa->equipe);
+        }
+
+        return false;
     }
 }

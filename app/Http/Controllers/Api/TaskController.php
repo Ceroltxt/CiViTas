@@ -91,7 +91,7 @@ class TaskController extends Controller
         UpdateTaskStatusRequest $request,
         Tarefa $task
     ): TaskResource {
-        Gate::authorize('update', $task);
+        Gate::authorize('updateStatus', $task);
 
         /** @var Funcionario $funcionario */
         $funcionario = $request->user();
@@ -128,7 +128,7 @@ class TaskController extends Controller
 
     public function toggleSubtask(Request $request, Tarefa $task, Subtarefa $subtask): TaskResource
     {
-        Gate::authorize('update', $task);
+        Gate::authorize('updateStatus', $task);
 
         /** @var Funcionario $funcionario */
         $funcionario = $request->user();
@@ -150,7 +150,7 @@ class TaskController extends Controller
 
     public function addComment(Request $request, Tarefa $task): TaskResource
     {
-        Gate::authorize('update', $task);
+        Gate::authorize('updateStatus', $task);
 
         $request->validate([
             'comentario' => ['required', 'string', 'max:1000'],

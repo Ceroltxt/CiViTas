@@ -104,7 +104,8 @@ test('colaborador can update assigned task but gestor from other project cannot'
     $gestor = funcionarioByEmail('gestor@civitas.test');
     $tarefa = Tarefa::query()->whereHas('colaboradores', fn ($q) => $q->where('email', 'ana@civitas.test'))->firstOrFail();
 
-    expect(Gate::forUser($colaborador)->allows('update', $tarefa))->toBeTrue();
+    expect(Gate::forUser($colaborador)->allows('updateStatus', $tarefa))->toBeTrue();
+    expect(Gate::forUser($colaborador)->allows('update', $tarefa))->toBeFalse();
 
     $otherGestor = Funcionario::query()->create([
         'nome' => 'Outro',

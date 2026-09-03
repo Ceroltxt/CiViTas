@@ -39,13 +39,19 @@ class TarefaPolicy
     public function update(Funcionario $funcionario, Tarefa $tarefa): bool
     {
         return $funcionario->hasPermission(Permissions::TASKS_UPDATE)
+            && $this->canEditOrDeleteTask($funcionario, $tarefa);
+    }
+
+    public function updateStatus(Funcionario $funcionario, Tarefa $tarefa): bool
+    {
+        return $funcionario->hasPermission(Permissions::TASKS_UPDATE)
             && $this->canMutateTaskInScope($funcionario, $tarefa);
     }
 
     public function delete(Funcionario $funcionario, Tarefa $tarefa): bool
     {
         return $funcionario->hasPermission(Permissions::TASKS_DELETE)
-            && $this->canMutateTaskInScope($funcionario, $tarefa);
+            && $this->canEditOrDeleteTask($funcionario, $tarefa);
     }
 
     /**
