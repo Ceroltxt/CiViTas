@@ -42,6 +42,11 @@ class Funcionario extends Authenticatable
 
     protected $primaryKey = 'matricula_funcionario';
 
+    public function getRouteKeyName(): string
+    {
+        return 'matricula_funcionario';
+    }
+
     public function getAuthPasswordName(): string
     {
         return 'senha';

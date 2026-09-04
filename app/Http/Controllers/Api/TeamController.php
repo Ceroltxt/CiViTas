@@ -100,4 +100,65 @@ class TeamController extends Controller
 
         return response()->json(['message' => 'Equipe excluída com sucesso.']);
     }
+
+    public function members(Request $request, Equipe $team): JsonResponse
+    {
+        $team->load(['gestor', 'membros.cargo']);
+
+        $gestor = $team->gestor
+            ? (new UserSummaryResource($team->gestor))->additional(['role_override' => 'Gestor'])->toArray($request)
+            : null;
+
+        if ($gestor !== null) {
+            $gestor['role'] = 'Gestor';
+        }
+
+        $members = $team->membros->map(function (Funcionario $membro) use ($request) {
+            $data = (new UserSummaryResource($membro))->toArray($request);
+            $data['role'] = 'Colaborador';
+
+            return $data;
+        })->values();
+
+        return response()->json([
+            'gestor'  => $gestor,
+            'members' => $members,
+        ]);
+    }
+
+    public function addMember(Request $request, Equipe $team): JsonResponse
+    {
+        Gate::authorize('update', $team);
+
+        $request->validate([
+            'matricula_funcionario' => [
+                'required',
+                'integer',
+                'exists:funcionario,matricula_funcionario',
+            ],
+        ]);
+
+        $team->membros()->syncWithoutDetaching([$request->matricula_funcionario]);
+
+        return $this->members($request, $team);
+    }
+
+    public function removeMember(Request $request, Equipe $team, Funcionario $funcionario): JsonResponse
+    {
+        Gate::authorize('update', $team);
+
+        $team->membros()->detach($funcionario->matricula_funcionario);
+
+        return response()->json(['message' => 'Membro removido.']);
+    }
+
+    public function colaboradores(): AnonymousResourceCollection
+    {
+        $colaboradores = Funcionario::query()
+            ->with('cargo')
+            ->whereDoesntHave('cargo', fn ($q) => $q->whereIn('nome_cargo', ['Admin', 'Administrador']))
+            ->get();
+
+        return UserSummaryResource::collection($colaboradores);
+    }
 }

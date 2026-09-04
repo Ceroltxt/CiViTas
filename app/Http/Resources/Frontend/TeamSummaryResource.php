@@ -27,6 +27,9 @@ class TeamSummaryResource extends JsonResource
             'color' => ProjectProgressCalculator::colorForId($this->ID_equipe),
             'description' => $this->membros->count().' Colaborador(es) · '.$taskCount.' Tarefa(s)',
             'members' => UserSummaryResource::collection($this->whenLoaded('membros')),
+            'leader' => $this->whenLoaded('gestor', fn () => trim("{$this->gestor->nome} {$this->gestor->sobrenome}")),
+            'gestorId' => (string) $this->matricula_gestor,
+            'memberCount' => $this->whenLoaded('membros', fn () => $this->membros->count()),
         ];
     }
 }
