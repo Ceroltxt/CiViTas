@@ -245,7 +245,9 @@ class DashboardService
 
     public function tasks(Funcionario $funcionario): Collection
     {
-        return TaskQueryBuilder::forFuncionario($funcionario)->get();
+        return TaskQueryBuilder::forFuncionario($funcionario)
+            ->with(['status', 'colaboradores.cargo', 'subtarefas', 'projeto', 'equipe'])
+            ->get();
     }
 
     public function auditLogs(Funcionario $funcionario, int $limit = 10): Collection
