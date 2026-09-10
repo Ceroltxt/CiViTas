@@ -1,36 +1,22 @@
-FROM php:8.4-fpm
-
+FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
     libpq-dev \
     libzip-dev \
     zip \
-    unzip
+    unzip \
+    git \
+    && docker-php-ext-install pdo pdo_pgsql zip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-#Extensões pra banco de dados
-RUN docker-php-ext-install pdo_pgsql pgsql pdo mbstring exif pcntl bcmath gd zip
-
-#Instala redis
-RUN pecl install redis && docker-php-ext-enable redis
-
-# Instala o Composer (Copiando da imagem oficial)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+WORKDIR /app
 
-WORKDIR /var/www/html
+COPY . .
 
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-RUN chown -R www-data:www-data /var/www/html
+EXPOSE 8080
 
-
-USER www-data
-
-EXPOSE 9000
-CMD ["php-fpm"]
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
