@@ -26,9 +26,15 @@ class DashboardService
         )->count();
 
         $andamento = $tarefas->filter(
-            fn (Tarefa $t) => in_array($t->status?->nome_status, ['em-andamento', 'em-revisao', 'validar'], true),
+            fn (Tarefa $t) => in_array($t->status?->nome_status, ['em-andamento', 'em-revisao', 'validar'], true)
+                && (! $t->data_prazo || $t->data_prazo->endOfDay()->isFuture()),
         )->count();
-        $atraso = $tarefas->filter(fn (Tarefa $t) => $t->status?->nome_status === 'atrasado')->count();
+
+        $atraso = $tarefas->filter(
+            fn (Tarefa $t) => $t->status?->nome_status === 'atrasado'
+                || ($t->status?->nome_status !== 'concluido' && $t->data_prazo && $t->data_prazo->endOfDay()->isPast())
+        )->count();
+
         $concluidas = $tarefas->filter(fn (Tarefa $t) => $t->status?->nome_status === 'concluido')->count();
         $produtividade = $tarefas->isEmpty()
             ? 0

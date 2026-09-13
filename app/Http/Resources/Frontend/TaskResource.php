@@ -15,7 +15,12 @@ class TaskResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $status = $this->status?->nome_status ?? 'a-fazer';
+        $rawStatus = $this->status?->nome_status ?? 'a-fazer';
+        $status = $rawStatus;
+        if ($rawStatus !== 'concluido' && $this->data_prazo && $this->data_prazo->endOfDay()->isPast()) {
+            $status = 'atrasado';
+        }
+
         $projectProgress = ProjectProgressCalculator::forTask($this->resource);
         $subtaskProgress = $this->subtaskProgress();
 
@@ -30,7 +35,7 @@ class TaskResource extends JsonResource
             'projectProgress' => $this->when(! $this->pessoal, $projectProgress),
             'progress' => $subtaskProgress,
             'assignees' => UserSummaryResource::collection($this->whenLoaded('colaboradores')),
-            'note' => $this->overdueNote(),
+            'note' => $this->overdueNote($status),
             'personal' => $this->pessoal ? true : null,
             'notStarted' => $subtaskProgress === 0 && $status === 'a-fazer' ? true : null,
             'subtasks' => SubtaskResource::collection($this->whenLoaded('subtarefas')),
@@ -63,9 +68,9 @@ class TaskResource extends JsonResource
         return (int) round(($completed / $subtarefas->count()) * 100);
     }
 
-    private function overdueNote(): ?string
+    private function overdueNote(string $status): ?string
     {
-        if ($this->status?->nome_status !== 'atrasado' || ! $this->data_prazo) {
+        if ($status !== 'atrasado' || ! $this->data_prazo) {
             return null;
         }
 
