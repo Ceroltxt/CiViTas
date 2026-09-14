@@ -19,7 +19,10 @@ class WorkspaceContext
             return $next($request);
         }
 
-        // Se o frontend ainda não enviar o header, pega o primeiro workspace do usuário
+        // Rotas globais que não exigem workspace selecionado
+        if ($request->is('api/workspaces*') || $request->is('api/invites/*/accept') || $request->is('api/auth/*')) {
+            return $next($request);
+        }
         if (!$workspaceId) {
             $primeiroWorkspace = DB::table('workspace_funcionario')
                 ->where('matricula_funcionario', $user->matricula_funcionario)

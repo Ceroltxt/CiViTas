@@ -8,7 +8,6 @@ use App\Models\Organization\Cargo;
 use App\Models\Organization\Departamento;
 use App\Models\Task\StatusTarefa;
 use App\Models\Task\Tarefa;
-use App\Rules\CpfRule;
 use Illuminate\Support\Facades\DB;
 
 class RegisterAction
@@ -25,27 +24,38 @@ class RegisterAction
         ?string $cpf = null
     ): array {
         return DB::transaction(function () use ($nome, $email, $password, $sobrenome, $nomeDepartamento, $cpf) {
-            $cargoDefault = Cargo::query()->firstOrCreate(['nome_cargo' => 'Desenvolvedor']);
+            $cargoDefault = Cargo::query()->firstOrCreate(['nome_cargo' => 'Admin']);
             $departamentoDefault = Departamento::query()->firstOrCreate([
-                'nome_departamento' => $nomeDepartamento ?: 'Engenharia',
+                'nome_departamento' => $nomeDepartamento ?: 'Geral',
             ]);
 
             $parts = explode(' ', trim($nome), 2);
             $primeiroNome = $parts[0];
-            $sobrenomeCalc = $sobrenome ?: ($parts[1] ?? 'Colaborador');
-
-            $cpfSanitizado = CpfRule::sanitize($cpf);
+            $sobrenomeCalc = $sobrenome ?: ($parts[1] ?? 'Admin');
 
             $funcionario = Funcionario::query()->create([
                 'nome' => $primeiroNome,
                 'sobrenome' => $sobrenomeCalc,
                 'email' => $email,
-                'CPF' => $cpfSanitizado,
+                'CPF' => $cpf ?: null,
                 'data_nascimento' => '2000-01-01',
                 'pontos_totais' => 0,
                 'senha' => $password,
                 'ID_departamento' => $departamentoDefault->getKey(),
                 'ID_cargo' => $cargoDefault->getKey(),
+            ]);
+
+            // Criar workspace pessoal para o novo usuário com papel de admin
+            $workspace = \App\Models\Workspace\Workspace::query()->create([
+                'nome' => 'Workspace de ' . $primeiroNome,
+            ]);
+
+            DB::table('workspace_funcionario')->insert([
+                'workspace_id' => $workspace->id,
+                'matricula_funcionario' => $funcionario->matricula_funcionario,
+                'role' => 'admin',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // Criar tarefa pessoal de boas-vindas para o primeiro acesso

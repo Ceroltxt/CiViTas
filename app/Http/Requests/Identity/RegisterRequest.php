@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests\Identity;
 
-use App\Rules\CpfRule;
-use App\Rules\ValidEmailDomainRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterRequest extends FormRequest
@@ -32,10 +30,6 @@ class RegisterRequest extends FormRequest
             $merge['sobrenome'] = trim($this->sobrenome);
         }
 
-        if ($this->has('CPF') && (is_string($this->CPF) || is_numeric($this->CPF))) {
-            $merge['CPF'] = CpfRule::sanitize((string) $this->CPF);
-        }
-
         if (! empty($merge)) {
             $this->merge($merge);
         }
@@ -52,19 +46,12 @@ class RegisterRequest extends FormRequest
             'email' => [
                 'required',
                 'string',
-                'email:rfc,dns',
+                'email',
                 'max:255',
                 'unique:funcionario,email',
-                new ValidEmailDomainRule,
             ],
             'password' => ['required', 'string', 'min:8'],
             'departamento' => ['nullable', 'string', 'max:100'],
-            'CPF' => [
-                'required',
-                'string',
-                new CpfRule,
-                'unique:funcionario,CPF',
-            ],
         ];
     }
 
@@ -80,8 +67,6 @@ class RegisterRequest extends FormRequest
             'email.unique' => 'Este e-mail já está cadastrado no sistema.',
             'password.required' => 'A senha é obrigatória.',
             'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
-            'CPF.required' => 'O CPF é obrigatório.',
-            'CPF.unique' => 'Este CPF já está cadastrado no sistema.',
         ];
     }
 }
