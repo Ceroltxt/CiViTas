@@ -135,14 +135,25 @@ class DashboardService
      */
     public function teams(Funcionario $funcionario): Collection
     {
-        return Equipe::query()
-            ->whereHas(
-                'membros',
-                fn ($q) => $q->where('equipe_funcionario.matricula_funcionario', $funcionario->matricula_funcionario),
-            )
-            ->orWhere('matricula_gestor', $funcionario->matricula_funcionario)
-            ->with('membros.cargo')
-            ->get();
+        $workspaceId = app()->bound('workspace_id') ? app('workspace_id') : null;
+        $role = app()->bound('workspace_role') ? app('workspace_role') : 'colaborador';
+
+        $query = Equipe::query();
+        
+        if ($workspaceId) {
+            $query->where('workspace_id', $workspaceId);
+        }
+
+        if ($role !== 'admin') {
+            $query->where(function ($q) use ($funcionario) {
+                $q->whereHas(
+                    'membros',
+                    fn ($sq) => $sq->where('equipe_funcionario.matricula_funcionario', $funcionario->matricula_funcionario)
+                )->orWhere('matricula_gestor', $funcionario->matricula_funcionario);
+            });
+        }
+
+        return $query->with('membros.cargo')->get();
     }
 
     /**

@@ -22,13 +22,29 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    use App\Http\Controllers\Api\WorkspaceController;
+use App\Http\Controllers\Api\WorkspaceInviteController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::get('/invites', [WorkspaceInviteController::class, 'index']);
+    Route::post('/invites', [WorkspaceInviteController::class, 'store']);
+    Route::post('/invites/{token}/accept', [WorkspaceInviteController::class, 'accept']);
+
         Route::get('/me', [AuthController::class, 'me'])->name('me');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     });
 });
 
+use App\Http\Controllers\Api\WorkspaceController;
+use App\Http\Controllers\Api\WorkspaceInviteController;
+
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::get('/invites', [WorkspaceInviteController::class, 'index']);
+    Route::post('/invites', [WorkspaceInviteController::class, 'store']);
+    Route::post('/invites/{token}/accept', [WorkspaceInviteController::class, 'accept']);
+
     Route::get('/me', [MeController::class, 'show'])->name('me.summary');
     Route::get('/me/current-project', [MeController::class, 'currentProject'])->name('me.current-project');
 
