@@ -4,14 +4,16 @@ namespace App\Http\Controllers\Api\Identity;
 
 use App\Application\Identity\Auth\LoginAction;
 use App\Application\Identity\Auth\LogoutAction;
+use App\Application\Identity\Auth\PasswordResetAction;
+use App\Application\Identity\Auth\RegisterAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Identity\ForgotPasswordRequest;
 use App\Http\Requests\Identity\LoginRequest;
+use App\Http\Requests\Identity\RegisterRequest;
+use App\Http\Requests\Identity\ResetPasswordRequest;
 use App\Http\Resources\Identity\FuncionarioResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
-use App\Application\Identity\Auth\RegisterAction;
-use App\Http\Requests\Identity\RegisterRequest;
 
 class AuthController extends Controller
 {
@@ -44,6 +46,28 @@ class AuthController extends Controller
             'token' => $result['token'],
             'token_type' => 'Bearer',
             'funcionario' => new FuncionarioResource($result['funcionario']),
+        ]);
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request, PasswordResetAction $passwordResetAction): JsonResponse
+    {
+        $passwordResetAction->sendResetLink($request->validated('email'));
+
+        return response()->json([
+            'message' => 'Se o e-mail informado estiver cadastrado, as instruções para redefinição de senha foram enviadas.',
+        ]);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request, PasswordResetAction $passwordResetAction): JsonResponse
+    {
+        $passwordResetAction->resetPassword(
+            email: $request->validated('email'),
+            token: $request->validated('token'),
+            newPassword: $request->validated('password'),
+        );
+
+        return response()->json([
+            'message' => 'Sua senha foi redefinida com sucesso! Você já pode realizar o login.',
         ]);
     }
 

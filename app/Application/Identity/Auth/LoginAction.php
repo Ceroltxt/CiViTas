@@ -16,7 +16,7 @@ class LoginAction
         $searchEmail = trim($email);
         $funcionario = Funcionario::query()
             ->where('email', $searchEmail)
-            ->orWhere('email', $searchEmail . '.test')
+            ->orWhere('email', $searchEmail.'.test')
             ->first();
 
         if ($funcionario === null || ! Hash::check($password, $funcionario->senha)) {

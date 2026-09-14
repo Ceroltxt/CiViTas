@@ -2,10 +2,8 @@
 
 namespace App\Providers;
 
-use Carbon\CarbonImmutable;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Gate;
+use App\Events\Identity\FuncionarioRegistered;
+use App\Listeners\Identity\SendWelcomeEmailListener;
 use App\Models\Identity\Funcionario;
 use App\Models\Project\Projeto;
 use App\Models\Task\Tarefa;
@@ -14,7 +12,12 @@ use App\Policies\Identity\FuncionarioPolicy;
 use App\Policies\Project\ProjetoPolicy;
 use App\Policies\Task\TarefaPolicy;
 use App\Policies\Team\EquipePolicy;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -35,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
         $this->configureDefaults();
+        $this->registerEvents();
     }
 
     protected function registerPolicies(): void
@@ -43,6 +47,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Projeto::class, ProjetoPolicy::class);
         Gate::policy(Equipe::class, EquipePolicy::class);
         Gate::policy(Funcionario::class, FuncionarioPolicy::class);
+    }
+
+    protected function registerEvents(): void
+    {
+        Event::listen(
+            FuncionarioRegistered::class,
+            SendWelcomeEmailListener::class,
+        );
     }
 
     /**

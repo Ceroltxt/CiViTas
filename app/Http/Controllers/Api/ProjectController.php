@@ -48,7 +48,7 @@ class ProjectController extends Controller
             if (! empty($data['gestores'])) {
                 foreach ($data['gestores'] as $matriculaGestor) {
                     $equipe = Equipe::query()->create([
-                        'nome' => 'Equipe ' . $proj->nome,
+                        'nome' => 'Equipe '.$proj->nome,
                         'matricula_gestor' => $matriculaGestor,
                         'pontos_totais' => 0,
                     ]);

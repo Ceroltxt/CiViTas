@@ -3,10 +3,9 @@
 namespace App\Http\Resources\Identity;
 
 use App\Models\Identity\Funcionario;
+use App\Support\Frontend\AppRoleResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-
-use App\Support\Frontend\AppRoleResolver;
 
 /**
  * @mixin Funcionario
@@ -23,6 +22,7 @@ class FuncionarioResource extends JsonResource
             'nome' => $this->nome,
             'sobrenome' => $this->sobrenome,
             'email' => $this->email,
+            'cpf' => $this->CPF,
             'pontos_totais' => $this->pontos_totais,
             'app_role' => AppRoleResolver::appRoleKey($this->resource),
             'role_label' => AppRoleResolver::resolveFromFuncionario($this->resource),

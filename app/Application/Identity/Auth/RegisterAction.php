@@ -2,11 +2,13 @@
 
 namespace App\Application\Identity\Auth;
 
+use App\Events\Identity\FuncionarioRegistered;
 use App\Models\Identity\Funcionario;
 use App\Models\Organization\Cargo;
 use App\Models\Organization\Departamento;
 use App\Models\Task\StatusTarefa;
 use App\Models\Task\Tarefa;
+use App\Rules\CpfRule;
 use Illuminate\Support\Facades\DB;
 
 class RegisterAction
@@ -32,11 +34,13 @@ class RegisterAction
             $primeiroNome = $parts[0];
             $sobrenomeCalc = $sobrenome ?: ($parts[1] ?? 'Colaborador');
 
+            $cpfSanitizado = CpfRule::sanitize($cpf);
+
             $funcionario = Funcionario::query()->create([
                 'nome' => $primeiroNome,
                 'sobrenome' => $sobrenomeCalc,
                 'email' => $email,
-                'CPF' => $cpf ?: str_pad((string) rand(10000000000, 99999999999), 11, '0', STR_PAD_LEFT),
+                'CPF' => $cpfSanitizado,
                 'data_nascimento' => '2000-01-01',
                 'pontos_totais' => 0,
                 'senha' => $password,
@@ -60,6 +64,11 @@ class RegisterAction
                     'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
                 ]);
             }
+
+            // Dispara o evento após confirmação da transação no banco de dados
+            DB::afterCommit(function () use ($funcionario) {
+                FuncionarioRegistered::dispatch($funcionario);
+            });
 
             return [
                 'funcionario' => $funcionario->load(['departamento', 'cargo']),

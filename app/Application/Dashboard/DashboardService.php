@@ -3,7 +3,7 @@
 namespace App\Application\Dashboard;
 
 use App\Http\Resources\Frontend\RankingEntryResource;
-use App\Http\Resources\Frontend\TaskResource;
+use App\Http\Resources\Frontend\UserSummaryResource;
 use App\Models\Identity\Funcionario;
 use App\Models\Project\Projeto;
 use App\Models\Task\HistoricoTarefa;
@@ -223,7 +223,7 @@ class DashboardService
                 'id' => (string) $tarefa->ID_tarefa,
                 'title' => $tarefa->nome,
                 'assignee' => $assignee
-                    ? (new \App\Http\Resources\Frontend\UserSummaryResource($assignee))->resolve()
+                    ? (new UserSummaryResource($assignee))->resolve()
                     : ['id' => '0', 'name' => 'Sem responsável'],
                 'group' => $tarefa->projeto?->nome,
                 'startIndex' => max(0, (int) $origin->diffInDays($tarefa->data_inicio)),

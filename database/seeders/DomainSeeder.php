@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Authorization\AppProfile;
 use App\Models\Identity\Funcionario;
 use App\Models\Organization\Cargo;
 use App\Models\Organization\Departamento;
@@ -11,8 +12,8 @@ use App\Models\Task\StatusTarefa;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
-use App\Domain\Authorization\AppProfile;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DomainSeeder extends Seeder
 {
@@ -102,7 +103,7 @@ class DomainSeeder extends Seeder
                 'prioridade' => 'alta',
                 'data_inicio' => now()->subMonths(3),
                 'data_previsao_fim' => now()->addMonths(6),
-                'ativo' => \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? \Illuminate\Support\Facades\DB::raw('true') : true,
+                'ativo' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('true') : true,
                 'ID_matricula_admin' => $gestor->matricula_funcionario,
             ],
         );
@@ -131,7 +132,7 @@ class DomainSeeder extends Seeder
                 'prioridade' => 'alta',
                 'data_inicio' => now()->subDays(10),
                 'data_prazo' => now()->addDays(15),
-                'pessoal' => \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? \Illuminate\Support\Facades\DB::raw('false') : false,
+                'pessoal' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('false') : false,
                 'tipo' => 'Fiscalização',
                 'complexidade' => 'Alta',
                 'categoria' => 'Obras',
@@ -148,7 +149,7 @@ class DomainSeeder extends Seeder
         Subtarefa::query()->updateOrCreate(
             ['nome' => 'Verificar alicerces', 'ID_tarefa' => $tarefa->ID_tarefa],
             [
-                'concluida' => \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? \Illuminate\Support\Facades\DB::raw('false') : false,
+                'concluida' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('false') : false,
                 'data_prazo' => now()->addDays(5),
                 'matricula_colaborador' => $colaborador->matricula_funcionario,
             ],
@@ -168,7 +169,7 @@ class DomainSeeder extends Seeder
                 'pontos_base' => 0,
                 'prioridade' => 'alta',
                 'data_prazo' => now()->addMonth(),
-                'pessoal' => \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? \Illuminate\Support\Facades\DB::raw('true') : true,
+                'pessoal' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('true') : true,
                 'matricula_gestor' => $colaborador->matricula_funcionario,
                 'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
             ],

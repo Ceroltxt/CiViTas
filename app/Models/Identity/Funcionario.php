@@ -19,7 +19,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable([
@@ -36,7 +38,7 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['senha'])]
 class Funcionario extends Authenticatable
 {
-    use HasApiTokens;
+    use HasApiTokens, Notifiable;
 
     protected $table = 'funcionario';
 
@@ -152,7 +154,7 @@ class Funcionario extends Authenticatable
 
         /** @var Collection<int, Permissao> $permissoes */
         $permissoes = $this->cargo->permissoes()
-            ->wherePivot('ativo', \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? \Illuminate\Support\Facades\DB::raw('true') : true)
+            ->wherePivot('ativo', DB::connection()->getDriverName() === 'pgsql' ? DB::raw('true') : true)
             ->get();
 
         return $permissoes->pluck('nome_permissao');

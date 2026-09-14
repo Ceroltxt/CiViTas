@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Application\Dashboard\DashboardService;
+use App\Domain\Authorization\AppProfile;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Task\CreateTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
+use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Http\Resources\Frontend\TaskResource;
 use App\Models\Identity\Funcionario;
-use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\StatusTarefa;
-use App\Models\Task\Tarefa;
-use Illuminate\Support\Facades\Gate;
-use App\Http\Requests\Task\CreateTaskRequest;
 use App\Models\Task\Subtarefa;
+use App\Models\Task\Tarefa;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
 {
@@ -100,7 +102,7 @@ class TaskController extends Controller
 
         // Se for colaborador em tarefa de trabalho tentando marcar 'concluido', passa para 'em-revisao'
         if ($statusSlug === 'concluido' && ! $task->pessoal) {
-            if ($funcionario->profile() === \App\Domain\Authorization\AppProfile::Colaborador) {
+            if ($funcionario->profile() === AppProfile::Colaborador) {
                 $statusSlug = 'em-revisao';
             }
         }
@@ -187,7 +189,7 @@ class TaskController extends Controller
         return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas', 'historico']));
     }
 
-    public function update(\App\Http\Requests\Task\UpdateTaskRequest $request, Tarefa $task): TaskResource
+    public function update(UpdateTaskRequest $request, Tarefa $task): TaskResource
     {
         Gate::authorize('update', $task);
 

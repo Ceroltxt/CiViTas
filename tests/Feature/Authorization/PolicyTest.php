@@ -5,7 +5,6 @@ use App\Domain\Authorization\Permissions;
 use App\Models\Identity\Funcionario;
 use App\Models\Organization\Cargo;
 use App\Models\Project\Projeto;
-use App\Models\Task\StatusTarefa;
 use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
 use Database\Seeders\AuthorizationSeeder;

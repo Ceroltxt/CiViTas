@@ -5,6 +5,7 @@ namespace App\Models\Task;
 use App\Models\Gamification\PontosUsuario;
 use App\Models\Identity\Funcionario;
 use App\Models\Project\Projeto;
+use App\Models\Team\Equipe;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,7 +62,7 @@ class Tarefa extends Model
 
     public function equipe(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Team\Equipe::class, 'ID_equipe', 'ID_equipe');
+        return $this->belongsTo(Equipe::class, 'ID_equipe', 'ID_equipe');
     }
 
     public function status(): BelongsTo

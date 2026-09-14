@@ -121,7 +121,7 @@ class TeamController extends Controller
         })->values();
 
         return response()->json([
-            'gestor'  => $gestor,
+            'gestor' => $gestor,
             'members' => $members,
         ]);
     }
