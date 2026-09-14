@@ -97,6 +97,14 @@ class TaskController extends Controller
         $funcionario = $request->user();
 
         $statusSlug = $request->validated('status');
+
+        // Se for colaborador em tarefa de trabalho tentando marcar 'concluido', passa para 'em-revisao'
+        if ($statusSlug === 'concluido' && ! $task->pessoal) {
+            if ($funcionario->profile() === \App\Domain\Authorization\AppProfile::Colaborador) {
+                $statusSlug = 'em-revisao';
+            }
+        }
+
         $statusRecord = StatusTarefa::query()->where('nome_status', $statusSlug)->firstOrFail();
 
         $task->ID_status_tarefa = $statusRecord->ID_status_tarefa;
@@ -135,6 +143,16 @@ class TaskController extends Controller
 
         $subtask->concluida = ! $subtask->concluida;
         $subtask->save();
+
+        // Se concluiu uma subtarefa e a tarefa principal estava 'a-fazer' ou sem status, passa para 'em-andamento'
+        $task->loadMissing('status');
+        if ($subtask->concluida && ($task->status?->nome_status === 'a-fazer' || $task->status === null)) {
+            $emAndamentoStatus = StatusTarefa::query()->where('nome_status', 'em-andamento')->first();
+            if ($emAndamentoStatus) {
+                $task->ID_status_tarefa = $emAndamentoStatus->ID_status_tarefa;
+                $task->save();
+            }
+        }
 
         $statusMsg = $subtask->concluida ? 'concluída' : 'reaberta';
 

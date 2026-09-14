@@ -41,8 +41,25 @@ test('assigned colaborador can update task status to em-andamento', function () 
     expect(HistoricoTarefa::query()->where('ID_tarefa', $tarefa->ID_tarefa)->exists())->toBeTrue();
 });
 
-test('updating task status to concluido sets completion date', function () {
+test('colaborador attempting concluido moves task to em-revisao', function () {
     actingAsColaboradorForTask();
+
+    $tarefa = Tarefa::query()->where('nome', 'Fiscalizar obra da Nova Praça Central')->firstOrFail();
+
+    $response = $this->patchJson(route('api.tasks.update-status', ['task' => $tarefa->ID_tarefa]), [
+        'status' => 'concluido',
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('status', 'em-revisao');
+
+    $statusEmRevisao = StatusTarefa::query()->where('nome_status', 'em-revisao')->firstOrFail();
+    expect($tarefa->fresh()->ID_status_tarefa)->toBe($statusEmRevisao->ID_status_tarefa);
+});
+
+test('gestor can conclude task directly setting completion date', function () {
+    $gestor = Funcionario::query()->where('email', 'gestor@civitas.test')->firstOrFail();
+    Sanctum::actingAs($gestor);
 
     $tarefa = Tarefa::query()->where('nome', 'Fiscalizar obra da Nova Praça Central')->firstOrFail();
 
