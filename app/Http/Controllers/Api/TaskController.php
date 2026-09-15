@@ -39,7 +39,13 @@ class TaskController extends Controller
 
         $statusAFazer = StatusTarefa::query()->where('nome_status', 'a-fazer')->firstOrFail();
         $colaboradores = array_filter((array) $request->validated('matricula_colaborador', []));
-        $isPessoal = $request->boolean('pessoal', false) || empty($colaboradores);
+        $isPessoal = $request->boolean('pessoal', false);
+
+        if ($request->filled('ID_projeto') || $request->filled('ID_equipe')) {
+            $isPessoal = false;
+        } elseif (empty($colaboradores)) {
+            $isPessoal = true;
+        }
 
         if (empty($colaboradores)) {
             $colaboradores = [$gestor->matricula_funcionario];
