@@ -126,6 +126,16 @@ class Funcionario extends Authenticatable
         return $this->hasMany(PontosUsuario::class, 'matricula_funcionario', 'matricula_funcionario');
     }
 
+    public function workspaces(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Workspace\Workspace::class,
+            'workspace_funcionario',
+            'matricula_funcionario',
+            'workspace_id'
+        )->withPivot('role')->withTimestamps();
+    }
+
     public function profile(): AppProfile
     {
         $this->loadMissing('cargo');
