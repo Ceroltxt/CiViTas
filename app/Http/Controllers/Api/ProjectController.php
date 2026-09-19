@@ -45,16 +45,6 @@ class ProjectController extends Controller
                 'ID_matricula_admin' => $user->matricula_funcionario,
             ]);
 
-            if (! empty($data['gestores'])) {
-                foreach ($data['gestores'] as $matriculaGestor) {
-                    $equipe = Equipe::query()->create([
-                        'nome' => 'Equipe '.$proj->nome,
-                        'matricula_gestor' => $matriculaGestor,
-                        'pontos_totais' => 0,
-                    ]);
-                    $proj->equipes()->attach($equipe->ID_equipe);
-                }
-            }
 
             return $proj;
         });
