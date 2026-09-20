@@ -3,8 +3,8 @@ const client = new Client({
   connectionString: 'postgresql://postgres.ejsxdrvwvydtjxqywipg:kZMyKWXju7Iy1h9c@aws-1-us-east-1.pooler.supabase.com:6543/postgres'
 });
 client.connect().then(() => {
-  return client.query("SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name = 'equipe'");
+  return client.query("UPDATE equipe SET workspace_id = 2 WHERE workspace_id IS NULL");
 }).then(res => {
-  console.log(res.rows);
+  console.log('Fixed', res.rowCount, 'equipes');
   client.end();
 });

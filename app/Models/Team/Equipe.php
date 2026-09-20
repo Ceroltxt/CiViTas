@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['nome', 'pontos_totais', 'matricula_gestor'])]
+#[Fillable(['nome', 'pontos_totais', 'matricula_gestor', 'workspace_id'])]
 class Equipe extends Model
 {
     protected $table = 'equipe';

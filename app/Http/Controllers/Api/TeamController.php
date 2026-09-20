@@ -48,6 +48,7 @@ class TeamController extends Controller
                     'nome' => $data['nome'],
                     'matricula_gestor' => $data['matricula_gestor'],
                     'pontos_totais' => 0,
+                    'workspace_id' => app()->bound('workspace_id') ? app('workspace_id') : null,
                 ]);
 
                 if (! empty($data['ID_projeto'])) {
