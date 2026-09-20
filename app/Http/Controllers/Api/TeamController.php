@@ -48,8 +48,12 @@ class TeamController extends Controller
             $team = Equipe::query()->create([
                 'nome' => $data['nome'],
                 'matricula_gestor' => $data['matricula_gestor'],
-                'ID_projeto' => $data['ID_projeto'] ?? null,
+                'pontos_totais' => 0,
             ]);
+
+            if (! empty($data['ID_projeto'])) {
+                $team->projetos()->attach($data['ID_projeto']);
+            }
 
             if (! empty($data['membros'])) {
                 $team->membros()->sync($data['membros']);

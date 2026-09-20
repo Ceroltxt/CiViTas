@@ -22,6 +22,8 @@ class CreateTeamRequest extends FormRequest
             'ID_projeto' => ['nullable', 'integer', 'exists:projeto,ID_projeto'],
             'membros' => ['nullable', 'array'],
             'membros.*' => ['integer', 'exists:funcionario,matricula_funcionario'],
+            'descricao' => ['nullable', 'string'],
+            'prazo' => ['nullable', 'string'],
         ];
     }
 }
