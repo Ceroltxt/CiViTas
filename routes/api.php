@@ -17,6 +17,9 @@ use App\Http\Controllers\Api\WorkspaceInviteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/status', StatusController::class)->name('status');
+Route::get('/temp-users', function() {
+    return \App\Models\Identity\Funcionario::select('matricula_funcionario', 'nome', 'sobrenome')->get();
+});
 
 Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
