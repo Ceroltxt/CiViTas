@@ -40,31 +40,34 @@ class TeamController extends Controller
 
     public function store(CreateTeamRequest $request): JsonResponse
     {
-        Gate::authorize('create', Equipe::class);
+        try {
+            $data = $request->validated();
 
-        $data = $request->validated();
+            $equipe = DB::transaction(function () use ($data) {
+                $team = Equipe::query()->create([
+                    'nome' => $data['nome'],
+                    'matricula_gestor' => $data['matricula_gestor'],
+                    'pontos_totais' => 0,
+                ]);
 
-        $equipe = DB::transaction(function () use ($data) {
-            $team = Equipe::query()->create([
-                'nome' => $data['nome'],
-                'matricula_gestor' => $data['matricula_gestor'],
-                'pontos_totais' => 0,
-            ]);
+                if (! empty($data['ID_projeto'])) {
+                    $team->projetos()->attach($data['ID_projeto']);
+                }
 
-            if (! empty($data['ID_projeto'])) {
-                $team->projetos()->attach($data['ID_projeto']);
-            }
+                if (! empty($data['membros'])) {
+                    $team->membros()->sync($data['membros']);
+                }
 
-            if (! empty($data['membros'])) {
-                $team->membros()->sync($data['membros']);
-            }
+                return $team;
+            });
 
-            return $team;
-        });
-
-        return (new TeamSummaryResource($equipe->fresh(['membros', 'projetos'])))
-            ->response()
-            ->setStatusCode(201);
+            return (new TeamSummaryResource($equipe->fresh(['membros', 'projetos'])))
+                ->response()
+                ->setStatusCode(201);
+        } catch (\Exception $e) {
+            \Log::error('Erro ao criar equipe no TeamController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function update(UpdateTeamRequest $request, Equipe $team): TeamSummaryResource

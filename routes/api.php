@@ -20,6 +20,25 @@ Route::get('/status', StatusController::class)->name('status');
 Route::get('/temp-users', function() {
     return \App\Models\Identity\Funcionario::select('matricula_funcionario', 'nome', 'sobrenome')->get();
 });
+Route::post('/teams-test', function(\Illuminate\Http\Request $request) {
+    try {
+        $data = $request->all();
+        $team = \App\Models\Team\Equipe::create([
+            'nome' => $data['nome'],
+            'matricula_gestor' => $data['matricula_gestor'],
+            'pontos_totais' => 0,
+        ]);
+        if (! empty($data['ID_projeto'])) {
+            $team->projetos()->attach($data['ID_projeto']);
+        }
+        if (! empty($data['membros'])) {
+            $team->membros()->sync($data['membros']);
+        }
+        return $team;
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+    }
+});
 
 Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
