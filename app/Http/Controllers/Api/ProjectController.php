@@ -89,6 +89,24 @@ class ProjectController extends Controller
         Gate::authorize('delete', $project);
 
         DB::transaction(function () use ($project) {
+            // Exclui todas as tarefas vinculadas a este projeto
+            $project->tarefas()->delete();
+
+            // Exclui as equipes e tarefas vinculadas a essas equipes
+            foreach ($project->equipes as $equipe) {
+                // Remove os membros da equipe
+                $equipe->membros()->detach();
+                
+                // Exclui todas as tarefas vinculadas à equipe
+                \App\Models\Task\Tarefa::where('ID_equipe', $equipe->ID_equipe)->delete();
+                
+                // Remove a equipe de outros projetos (embora vá ser excluída)
+                $equipe->projetos()->detach();
+                
+                // Exclui a equipe
+                $equipe->delete();
+            }
+
             $project->equipes()->detach();
             $project->delete();
         });
