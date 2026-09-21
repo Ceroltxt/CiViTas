@@ -28,12 +28,13 @@ class TeamController extends Controller
 
     public function gestores(): AnonymousResourceCollection
     {
-        // Pega todos os funcionários do site que tenham cargo de Gestor ou Admin, independentemente de projeto ou workspace.
-        $gestores = Funcionario::with('cargo')->get()->filter(function ($f) {
-            $cargo = mb_strtolower(trim($f->cargo?->nome_cargo ?? ''));
-            return in_array($cargo, ['gestor', 'admin', 'administrador']) ||
-                   in_array($f->email, ['gestor@civitas.test', 'admin@civitas.test']);
-        })->values();
+        $gestores = \Illuminate\Support\Facades\Cache::remember('gestores_list_v1', 60, function () {
+            return Funcionario::with('cargo')->get()->filter(function ($f) {
+                $cargo = mb_strtolower(trim($f->cargo?->nome_cargo ?? ''));
+                return in_array($cargo, ['gestor', 'admin', 'administrador']) ||
+                       in_array($f->email, ['gestor@civitas.test', 'admin@civitas.test']);
+            })->values();
+        });
 
         return UserSummaryResource::collection($gestores);
     }
@@ -165,11 +166,12 @@ class TeamController extends Controller
 
     public function colaboradores(): AnonymousResourceCollection
     {
-        // Pega todos os funcionários do site que não sejam Admin, independentemente de projeto ou workspace.
-        $colaboradores = Funcionario::with('cargo')->get()->filter(function ($f) {
-            $cargo = mb_strtolower(trim($f->cargo?->nome_cargo ?? ''));
-            return !in_array($cargo, ['admin', 'administrador']);
-        })->values();
+        $colaboradores = \Illuminate\Support\Facades\Cache::remember('colaboradores_list_v1', 60, function () {
+            return Funcionario::with('cargo')->get()->filter(function ($f) {
+                $cargo = mb_strtolower(trim($f->cargo?->nome_cargo ?? ''));
+                return !in_array($cargo, ['admin', 'administrador']);
+            })->values();
+        });
 
         return UserSummaryResource::collection($colaboradores);
     }

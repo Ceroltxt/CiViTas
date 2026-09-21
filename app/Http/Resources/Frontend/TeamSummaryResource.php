@@ -15,10 +15,7 @@ class TeamSummaryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $taskCount = $this->projetos()
-            ->withCount('tarefas')
-            ->get()
-            ->sum('tarefas_count');
+        $taskCount = $this->tarefas()->count();
 
         return [
             'id' => (string) $this->ID_equipe,
@@ -30,6 +27,7 @@ class TeamSummaryResource extends JsonResource
             'leader' => $this->whenLoaded('gestor', fn () => trim("{$this->gestor->nome} {$this->gestor->sobrenome}")),
             'gestorId' => (string) $this->matricula_gestor,
             'memberCount' => $this->whenLoaded('membros', fn () => $this->membros->count()),
+            'taskCount' => $taskCount,
         ];
     }
 }
