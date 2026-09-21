@@ -15,7 +15,10 @@ class TeamSummaryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $taskCount = $this->tarefas()->count();
+        $taskCount = $this->projetos()
+            ->withCount('tarefas')
+            ->get()
+            ->sum('tarefas_count');
 
         return [
             'id' => (string) $this->ID_equipe,
