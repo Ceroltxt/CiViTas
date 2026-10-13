@@ -62,7 +62,9 @@ class TaskController extends Controller
                 'media' => 100,
                 default => 50,
             },
-            'pessoal' => $isPessoal,
+            'pessoal' => DB::connection()->getDriverName() === 'pgsql' 
+                ? ($isPessoal ? DB::raw('true') : DB::raw('false')) 
+                : $isPessoal,
             'matricula_gestor' => $gestor->matricula_funcionario,
             'ID_projeto' => $request->validated('ID_projeto'),
             'ID_equipe' => $request->validated('ID_equipe'),
@@ -77,7 +79,7 @@ class TaskController extends Controller
                 Subtarefa::query()->create([
                     'nome' => trim($sub),
                     'ID_tarefa' => $tarefa->ID_tarefa,
-                    'concluida' => false,
+                    'concluida' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('false') : false,
                     'matricula_colaborador' => reset($colaboradores) ?: $gestor->matricula_funcionario,
                 ]);
             }
