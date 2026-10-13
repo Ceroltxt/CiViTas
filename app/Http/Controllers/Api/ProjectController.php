@@ -41,7 +41,7 @@ class ProjectController extends Controller
                 'prioridade' => $data['prioridade'] ?? 'media',
                 'data_inicio' => $data['data_inicio'] ?? now(),
                 'data_previsao_fim' => $data['data_previsao_fim'] ?? null,
-                'ativo' => true,
+                'ativo' => DB::raw('true'),
                 'ID_matricula_admin' => $user->matricula_funcionario,
             ]);
 

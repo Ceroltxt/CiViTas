@@ -11,6 +11,7 @@ use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
 use App\Support\Frontend\TaskQueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
@@ -105,7 +106,7 @@ class DashboardService
     public function projects(Funcionario $funcionario): Collection
     {
         return Projeto::query()
-            ->where('ativo', true)
+            ->where('ativo', '=', DB::raw('true'))
             ->where(function ($query) use ($funcionario): void {
                 $query
                     // Admin criador do projeto
@@ -256,7 +257,7 @@ class DashboardService
     public function boardTasks(Funcionario $funcionario): Collection
     {
         return TaskQueryBuilder::forFuncionario($funcionario)
-            ->where('pessoal', false)
+            ->where('pessoal', '=', DB::raw('false'))
             ->get();
     }
 
