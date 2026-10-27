@@ -12,6 +12,9 @@ use App\Models\Team\Equipe;
 use App\Support\Frontend\TaskQueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Authorization\AppProfile;
+use App\Models\Gamification\PontosUsuario;
+use Carbon\Carbon;
 
 class DashboardService
 {
@@ -89,15 +92,60 @@ class DashboardService
     /**
      * @return list<array<string, mixed>>
      */
-    public function ranking(int $limit = 10): array
-    {
-        return Funcionario::query()
+
+/**
+ * @return list<array<string, mixed>>
+ */
+    public function ranking(?string $mes = null): array{
+        $inicio = Carbon::createFromFormat('!Y-m', $mes ?? now()->format('Y-m'));
+        $fim = $inicio->copy()->addMonth();
+
+        $pontuacoes = PontosUsuario::query()
+            ->select('matricula_funcionario')
+            ->selectRaw('SUM(pontos) as total_pontos')
+            ->where('data', '>=', $inicio)
+            ->where('data', '<', $fim)
+            ->groupBy('matricula_funcionario')
+            ->pluck('total_pontos', 'matricula_funcionario');
+
+        $colaboradores = Funcionario::query()
             ->with('cargo')
-            ->orderByDesc('pontos_totais')
-            ->limit($limit)
             ->get()
-            ->map(fn (Funcionario $f, int $i) => (new RankingEntryResource($f, $i + 1))->resolve())
-            ->all();
+            ->filter(
+                fn (Funcionario $funcionario) =>
+                    $funcionario->profile() === AppProfile::Colaborador
+            )
+            ->map(function (Funcionario $funcionario) use ($pontuacoes): array {
+                return [
+                    'funcionario' => $funcionario,
+                    'pontos' => (int) ($pontuacoes[$funcionario->matricula_funcionario] ?? 0),
+                ];
+            })
+            ->sortByDesc('pontos')
+            ->values();
+
+        $resultado = [];
+        $posicao = 0;
+        $posicaoAnterior = null;
+
+        foreach ($colaboradores as $indice => $entrada) {
+            $pontos = $entrada['pontos'];
+
+            if ($posicaoAnterior !== $pontos) {
+                $posicao = $indice + 1;
+                $posicaoAnterior = $pontos;
+            }
+
+            $funcionario = $entrada['funcionario'];
+
+            $resultado[] = [
+                'position' => $posicao,
+                'user' => (new UserSummaryResource($funcionario))->resolve(),
+                'stars' => $pontos,
+            ];
+        }
+
+        return $resultado;
     }
 
     /**

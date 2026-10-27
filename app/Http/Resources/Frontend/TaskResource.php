@@ -17,7 +17,11 @@ class TaskResource extends JsonResource
     {
         $rawStatus = $this->status?->nome_status ?? 'a-fazer';
         $status = $rawStatus;
-        if ($rawStatus !== 'concluido' && $this->data_prazo && $this->data_prazo->endOfDay()->isPast()) {
+        if (
+            ! in_array($rawStatus, ['concluido', 'fechada'], true)
+            && $this->data_prazo
+            && $this->data_prazo->endOfDay()->isPast()
+        ) {
             $status = 'atrasado';
         }
 
@@ -50,6 +54,7 @@ class TaskResource extends JsonResource
             'category' => $this->categoria,
             'program' => $this->programa,
             'completedDate' => $this->data_conclusao?->format('d/m/Y'),
+            'autoCloseAt' => $this->data_fechamento_automatico?->toIso8601String(),
         ];
     }
 

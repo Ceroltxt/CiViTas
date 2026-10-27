@@ -29,6 +29,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'ID_projeto',
     'ID_equipe',
     'ID_status_tarefa',
+    'data_fechamento_automatico',
+    'foi_reaberta',
+    'penalidade_reabertura_aplicada',
+    'quantidade_reaberturas',
 ])]
 class Tarefa extends Model
 {
@@ -47,6 +51,10 @@ class Tarefa extends Model
             'data_prazo' => 'date',
             'data_conclusao' => 'date',
             'pessoal' => 'boolean',
+            'data_fechamento_automatico' => 'datetime',
+            'foi_reaberta' => 'boolean',
+            'penalidade_reabertura_aplicada' => 'boolean',
+            'quantidade_reaberturas' => 'integer',
         ];
     }
 

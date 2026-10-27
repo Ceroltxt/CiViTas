@@ -27,6 +27,11 @@ class CreateTaskRequest extends FormRequest
             'pessoal' => ['nullable', 'boolean'],
             'subtarefas' => ['nullable', 'array'],
             'subtarefas.*' => ['string', 'max:255'],
+            'data_fechamento_automatico' => [
+                'nullable',
+                'date',
+                'after:now',
+            ],
         ];
     }
 

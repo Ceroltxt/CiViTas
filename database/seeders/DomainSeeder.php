@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Workspace\Workspace;
 use App\Domain\Authorization\AppProfile;
 use App\Models\Identity\Funcionario;
 use App\Models\Organization\Cargo;
@@ -95,6 +96,34 @@ class DomainSeeder extends Seeder
                 'ID_cargo' => $cargoColaborador->getKey(),
             ],
         );
+
+        // Workspace padrão para os dados de desenvolvimento e testes.
+        $workspace = Workspace::query()->firstOrCreate([
+            'nome' => 'Workspace Padrão',
+        ]);
+
+        $funcionarios = Funcionario::query()->with('cargo')->get();
+
+        foreach ($funcionarios as $funcionario) {
+            $role = match ($funcionario->profile()) {
+                AppProfile::Admin => 'admin',
+                AppProfile::Gestor => 'gestor',
+                default => 'colaborador',
+            };
+
+            DB::table('workspace_funcionario')->updateOrInsert(
+                [
+                    'workspace_id' => $workspace->id,
+                    'matricula_funcionario' => $funcionario->matricula_funcionario,
+                ],
+                [
+                    'role' => $role,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            );
+        }
+
 
         $projeto = Projeto::query()->updateOrCreate(
             ['nome' => 'Nova Praça Central'],

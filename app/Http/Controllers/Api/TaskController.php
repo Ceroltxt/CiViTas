@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Gamification\TaskPointsService;
 use App\Application\Dashboard\DashboardService;
 use App\Domain\Authorization\AppProfile;
 use App\Http\Controllers\Controller;
@@ -69,6 +70,9 @@ class TaskController extends Controller
             'ID_projeto' => $request->validated('ID_projeto'),
             'ID_equipe' => $request->validated('ID_equipe'),
             'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
+            'data_fechamento_automatico' => $request->validated(
+                'data_fechamento_automatico'
+            ),
         ]);
 
         $tarefa->colaboradores()->syncWithoutDetaching($colaboradores);
@@ -98,44 +102,154 @@ class TaskController extends Controller
     }
 
     public function updateStatus(
-        UpdateTaskStatusRequest $request,
-        Tarefa $task
+    UpdateTaskStatusRequest $request,
+    Tarefa $task,
+    TaskPointsService $taskPoints
     ): TaskResource {
-        Gate::authorize('updateStatus', $task);
+        $taskId = $task->ID_tarefa;
 
-        /** @var Funcionario $funcionario */
-        $funcionario = $request->user();
+        return DB::transaction(function () use (
+            $request,
+            $taskId,
+            $taskPoints
+        ): TaskResource {
+            // Relê e bloqueia a tarefa antes de validar a transição.
+            $task = Tarefa::query()
+                ->where('ID_tarefa', $taskId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $statusSlug = $request->validated('status');
+            Gate::authorize('updateStatus', $task);
 
-        // Se for colaborador em tarefa de trabalho tentando marcar 'concluido', passa para 'em-revisao'
-        if ($statusSlug === 'concluido' && ! $task->pessoal) {
-            if ($funcionario->profile() === AppProfile::Colaborador) {
-                $statusSlug = 'em-revisao';
+            /** @var Funcionario $funcionario */
+            $funcionario = $request->user();
+
+            $perfil = $funcionario->profile();
+            $isGestor = $perfil === AppProfile::Gestor;
+            $isColaborador = $perfil === AppProfile::Colaborador;
+
+            $statusSlug = $request->validated('status');
+
+            $task->loadMissing('status');
+            $statusAtual = $task->status?->nome_status;
+            $reabriuTarefa = $statusAtual === 'fechada';
+
+            // Fechar uma tarefa é uma ação exclusiva do gestor.
+            if ($statusSlug === 'fechada') {
+                abort_unless(
+                    $isGestor,
+                    403,
+                    'Somente o gestor pode fechar uma tarefa.'
+                );
+
+                abort_if(
+                    $task->data_conclusao !== null,
+                    422,
+                    'Uma tarefa já concluída não pode ser fechada como pendente.'
+                );
             }
-        }
 
-        $statusRecord = StatusTarefa::query()->where('nome_status', $statusSlug)->firstOrFail();
+            // Reabrir uma tarefa fechada é exclusivo do gestor.
+            if ($reabriuTarefa) {
+                abort_unless(
+                    $isGestor,
+                    403,
+                    'Somente o gestor pode reabrir uma tarefa fechada.'
+                );
 
-        $task->ID_status_tarefa = $statusRecord->ID_status_tarefa;
+                abort_if(
+                    $task->data_conclusao !== null,
+                    422,
+                    'Esta tarefa já foi concluída e não pode ser reaberta por este fluxo.'
+                );
 
-        if ($statusSlug === 'concluido') {
-            $task->data_conclusao = now();
-        } else {
-            $task->data_conclusao = null;
-        }
+                abort_unless(
+                    in_array($statusSlug, ['a-fazer', 'em-andamento'], true),
+                    422,
+                    'Ao reabrir uma tarefa, selecione a fazer ou em andamento.'
+                );
 
-        $task->save();
+                $task->foi_reaberta = true;
+                $task->quantidade_reaberturas =
+                    (int) $task->quantidade_reaberturas + 1;
+            }
 
-        HistoricoTarefa::query()->create([
-            'acao' => 'Status alterado',
-            'detalhes' => "Status alterado para '{$statusRecord->nome_status}'",
-            'ID_tarefa' => $task->ID_tarefa,
-            'matricula_funcionario' => $funcionario->matricula_funcionario,
-        ]);
+            // Tarefas de trabalho seguem o fluxo de revisão.
+            if (! $task->pessoal) {
+                if ($isColaborador) {
+                    abort_unless(
+                        in_array(
+                            $statusSlug,
+                            [
+                                'a-fazer',
+                                'em-andamento',
+                                'em-revisao',
+                                'concluido',
+                            ],
+                            true
+                        ),
+                        403,
+                        'Você não tem permissão para definir esse status.'
+                    );
 
-        return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas']));
+                    // O colaborador solicita a conclusão; o gestor aprova.
+                    if ($statusSlug === 'concluido') {
+                        $statusSlug = 'em-revisao';
+                    }
+                }
+
+                // Apenas o gestor pode aprovar a conclusão de tarefas de trabalho.
+                if ($statusSlug === 'concluido') {
+                    abort_unless(
+                        $isGestor,
+                        403,
+                        'Somente o gestor pode aprovar a conclusão desta tarefa.'
+                    );
+                }
+            }
+
+            $statusRecord = StatusTarefa::query()
+                ->where('nome_status', $statusSlug)
+                ->firstOrFail();
+
+            $task->ID_status_tarefa = $statusRecord->ID_status_tarefa;
+
+            if ($statusSlug === 'concluido') {
+                $task->data_conclusao = now();
+            } elseif ($statusSlug !== 'fechada') {
+                $task->data_conclusao = null;
+            }
+
+            $task->save();
+
+            // A penalidade faz parte da mesma transação do status.
+            if ($reabriuTarefa) {
+                $taskPoints->penalizeReopening(
+                    $task,
+                    (int) $task->quantidade_reaberturas
+                );
+            }
+
+            // Registra a pontuação quando a conclusão é aprovada.
+            if ($statusSlug === 'concluido') {
+                $taskPoints->awardForCompletion($task);
+            }
+
+            // O histórico também precisa ser persistido na mesma transação.
+            HistoricoTarefa::query()->create([
+                'acao' => 'Status alterado',
+                'detalhes' => "Status alterado para '{$statusRecord->nome_status}'",
+                'ID_tarefa' => $task->ID_tarefa,
+                'matricula_funcionario' =>
+                    $funcionario->matricula_funcionario,
+            ]);
+
+            return new TaskResource(
+                $task->fresh(['status', 'colaboradores', 'subtarefas'])
+            );
+        });
     }
+
 
     public function show(Tarefa $task): TaskResource
     {
@@ -228,6 +342,10 @@ class TaskController extends Controller
         }
         if (array_key_exists('ID_equipe', $data)) {
             $task->ID_equipe = $data['ID_equipe'];
+        }
+
+        if (array_key_exists('data_fechamento_automatico', $data)) {
+            $task->data_fechamento_automatico = $data['data_fechamento_automatico'];
         }
 
         $task->save();
