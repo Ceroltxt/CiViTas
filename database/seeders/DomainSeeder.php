@@ -142,6 +142,7 @@ class DomainSeeder extends Seeder
             [
                 'pontos_totais' => 500,
                 'matricula_gestor' => $gestor->matricula_funcionario,
+                'workspace_id' => $workspace->id,
             ],
         );
 

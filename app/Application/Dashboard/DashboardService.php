@@ -188,7 +188,7 @@ class DashboardService
         $role = app()->bound('workspace_role') ? app('workspace_role') : 'colaborador';
 
         $query = Equipe::query();
-        
+
         if ($workspaceId) {
             $query->where('workspace_id', $workspaceId);
         }
@@ -316,15 +316,30 @@ class DashboardService
             ->get();
     }
 
-    public function auditLogs(Funcionario $funcionario, int $limit = 10): Collection
-    {
+
+    public function auditLogs(
+        Funcionario $funcionario,
+        int $limit = 10,
+        ?string $startDate = null,
+        ?string $endDate = null,
+    ): Collection {
         $tarefaIds = TaskQueryBuilder::forFuncionario($funcionario)->pluck('ID_tarefa');
 
-        return HistoricoTarefa::query()
+        $query = HistoricoTarefa::query()
             ->with('funcionario')
-            ->whereIn('ID_tarefa', $tarefaIds)
+            ->whereIn('ID_tarefa', $tarefaIds);
+
+        if ($startDate !== null) {
+            $query->whereDate('created_at', '>=', $startDate);
+        }
+
+        if ($endDate !== null) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        return $query
             ->latest()
-            ->limit($limit)
+            ->limit(max(1, min($limit, 100)))
             ->get();
     }
 

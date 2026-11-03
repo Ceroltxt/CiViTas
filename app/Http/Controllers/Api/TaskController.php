@@ -15,6 +15,9 @@ use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\StatusTarefa;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
+use App\Models\Project\Projeto;
+use App\Models\Team\Equipe;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -33,70 +36,160 @@ class TaskController extends Controller
 
     public function store(CreateTaskRequest $request): JsonResponse
     {
-        Gate::authorize('create', Tarefa::class);
+        /** @var Funcionario $funcionario */
+        $funcionario = $request->user();
 
-        /** @var Funcionario $gestor */
-        $gestor = $request->user();
+        abort_unless(
+            app()->bound('workspace_id'),
+            403,
+            'Workspace ativo não identificado.'
+        );
 
-        $statusAFazer = StatusTarefa::query()->where('nome_status', 'a-fazer')->firstOrFail();
-        $colaboradores = array_filter((array) $request->validated('matricula_colaborador', []));
-        $isPessoal = $request->boolean('pessoal', false);
+        $workspaceId = (int) app('workspace_id');
+        $dados = $request->validated();
 
-        if ($request->filled('ID_projeto') || $request->filled('ID_equipe')) {
-            $isPessoal = false;
-        } elseif (empty($colaboradores)) {
-            $isPessoal = true;
+        $perfil = $funcionario->workspaceProfile();
+        $isPessoal = $perfil === AppProfile::Colaborador;
+
+        if ($isPessoal) {
+            Gate::authorize('createPersonal', Tarefa::class);
+
+            $projetoId = null;
+            $equipeId = null;
+            $colaboradores = [$funcionario->matricula_funcionario];
+        } else {
+            Gate::authorize('create', Tarefa::class);
+
+            $projetoId = $dados['ID_projeto'] ?? null;
+            $equipeId = $dados['ID_equipe'] ?? null;
+
+            if (! $projetoId && ! $equipeId) {
+                throw ValidationException::withMessages([
+                    'ID_projeto' => 'Informe um projeto ou uma equipe para a tarefa.',
+                ]);
+            }
+
+            $projeto = null;
+            $equipe = null;
+
+            if ($projetoId) {
+                $projeto = Projeto::query()
+                    ->whereHas('equipes', function ($query) use ($workspaceId) {
+                        $query->where('equipe.workspace_id', $workspaceId);
+                    })
+                    ->find($projetoId);
+
+                if (! $projeto) {
+                    throw ValidationException::withMessages([
+                        'ID_projeto' => 'O projeto não pertence ao workspace ativo.',
+                    ]);
+                }
+            }
+
+            if ($equipeId) {
+                $equipe = Equipe::query()
+                    ->where('workspace_id', $workspaceId)
+                    ->find($equipeId);
+
+                if (! $equipe) {
+                    throw ValidationException::withMessages([
+                        'ID_equipe' => 'A equipe não pertence ao workspace ativo.',
+                    ]);
+                }
+            }
+
+            if ($projeto && $equipe) {
+                $equipeAssociada = $projeto->equipes()
+                    ->where('equipe.ID_equipe', $equipe->ID_equipe)
+                    ->exists();
+
+                if (! $equipeAssociada) {
+                    throw ValidationException::withMessages([
+                        'ID_equipe' => 'A equipe informada não está associada ao projeto.',
+                    ]);
+                }
+            }
+
+            $colaboradores = array_values(array_unique(
+                array_filter(
+                    (array) ($dados['matricula_colaborador'] ?? [])
+                )
+            ));
+
+            if (empty($colaboradores)) {
+                $colaboradores = [$funcionario->matricula_funcionario];
+            }
+
+            $colaboradoresNoWorkspace = DB::table('workspace_funcionario')
+                ->where('workspace_id', $workspaceId)
+                ->whereIn('matricula_funcionario', $colaboradores)
+                ->pluck('matricula_funcionario')
+                ->map(fn ($matricula) => (string) $matricula)
+                ->all();
+
+            foreach ($colaboradores as $matricula) {
+                if (! in_array((string) $matricula, $colaboradoresNoWorkspace, true)) {
+                    throw ValidationException::withMessages([
+                        'matricula_colaborador' =>
+                            "O colaborador {$matricula} não pertence ao workspace ativo.",
+                    ]);
+                }
+            }
         }
 
-        if (empty($colaboradores)) {
-            $colaboradores = [$gestor->matricula_funcionario];
-        }
+        $statusAFazer = StatusTarefa::query()
+            ->where('nome_status', 'a-fazer')
+            ->firstOrFail();
 
         $tarefa = Tarefa::query()->create([
-            'nome' => $request->validated('nome'),
-            'descricao' => $request->validated('descricao'),
-            'prioridade' => $request->validated('prioridade'),
-            'data_prazo' => $request->validated('data_prazo'),
+            'nome' => $dados['nome'],
+            'descricao' => $dados['descricao'] ?? null,
+            'prioridade' => $dados['prioridade'],
+            'data_prazo' => $dados['data_prazo'],
             'data_inicio' => now(),
-            'pontos_base' => match ($request->validated('prioridade')) {
+            'pontos_base' => match ($dados['prioridade']) {
                 'alta' => 200,
                 'media' => 100,
                 default => 50,
             },
-            'pessoal' => DB::connection()->getDriverName() === 'pgsql' 
-                ? ($isPessoal ? DB::raw('true') : DB::raw('false')) 
+            'pessoal' => DB::connection()->getDriverName() === 'pgsql'
+                ? ($isPessoal ? DB::raw('true') : DB::raw('false'))
                 : $isPessoal,
-            'matricula_gestor' => $gestor->matricula_funcionario,
-            'ID_projeto' => $request->validated('ID_projeto'),
-            'ID_equipe' => $request->validated('ID_equipe'),
+            'matricula_gestor' => $funcionario->matricula_funcionario,
+            'ID_projeto' => $projetoId,
+            'ID_equipe' => $equipeId,
             'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
-            'data_fechamento_automatico' => $request->validated(
-                'data_fechamento_automatico'
-            ),
+            'data_fechamento_automatico' =>
+                $dados['data_fechamento_automatico'] ?? null,
         ]);
 
-        $tarefa->colaboradores()->syncWithoutDetaching($colaboradores);
+        $tarefa->colaboradores()->sync($colaboradores);
 
-        $subtarefas = (array) $request->validated('subtarefas', []);
-        foreach ($subtarefas as $sub) {
+        foreach (($dados['subtarefas'] ?? []) as $sub) {
             if (is_string($sub) && trim($sub) !== '') {
                 Subtarefa::query()->create([
                     'nome' => trim($sub),
                     'ID_tarefa' => $tarefa->ID_tarefa,
-                    'concluida' => DB::connection()->getDriverName() === 'pgsql' ? DB::raw('false') : false,
-                    'matricula_colaborador' => reset($colaboradores) ?: $gestor->matricula_funcionario,
+                    'concluida' => false,
+                    'matricula_colaborador' => $colaboradores[0],
                 ]);
             }
         }
 
         HistoricoTarefa::query()->create([
-            'acao' => $isPessoal ? 'Tarefa pessoal criada' : 'Tarefa criada e atribuída',
-            'detalhes' => $isPessoal ? "Tarefa pessoal criada por {$gestor->nome}" : "Tarefa criada pelo gestor {$gestor->nome}",
+            'acao' => $isPessoal
+                ? 'Tarefa pessoal criada'
+                : 'Tarefa criada e atribuída',
+            'detalhes' => $isPessoal
+                ? "Tarefa pessoal criada por {$funcionario->nome}"
+                : "Tarefa criada pelo gestor {$funcionario->nome}",
             'ID_tarefa' => $tarefa->ID_tarefa,
-            'matricula_funcionario' => $gestor->matricula_funcionario,
+            'matricula_funcionario' => $funcionario->matricula_funcionario,
         ]);
 
-        return (new TaskResource($tarefa->fresh(['status', 'colaboradores', 'subtarefas'])))
+        return (new TaskResource(
+            $tarefa->fresh(['status', 'colaboradores', 'subtarefas'])
+        ))
             ->response()
             ->setStatusCode(201);
     }
@@ -124,7 +217,7 @@ class TaskController extends Controller
             /** @var Funcionario $funcionario */
             $funcionario = $request->user();
 
-            $perfil = $funcionario->profile();
+            $perfil = $funcionario->workspaceProfile();
             $isGestor = $perfil === AppProfile::Gestor;
             $isColaborador = $perfil === AppProfile::Colaborador;
 

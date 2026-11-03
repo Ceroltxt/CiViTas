@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TaskCsvImportController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Controllers\Api\WorkspaceInviteController;
@@ -73,6 +74,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    // Exportar projetos em CSV
+    Route::get('/projects/export', \App\Http\Controllers\Api\ProjectCsvExportController::class)
+        ->name('projects.export');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
@@ -88,6 +92,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/colaboradores', [TeamController::class, 'colaboradores'])->name('colaboradores');
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+
+    // Exportar tarefas em CSV
+    Route::get('/tasks/export', \App\Http\Controllers\Api\TaskCsvExportController::class)
+        ->name('tasks.export');
+
+    // Importar tarefas em CSV
+    Route::post('/tasks/import/preview', [TaskCsvImportController::class, 'preview'])
+        ->name('tasks.import.preview');
+    Route::post('/tasks/import/confirm', [TaskCsvImportController::class, 'confirm'])
+        ->name('tasks.import.confirm');
+
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
@@ -101,5 +116,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/calendar/events', [CalendarController::class, 'events'])->name('calendar.events');
-    Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs');
+
+    // Consultar o histórico de atividades
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])
+        ->name('audit-logs');
+
+    // Exportar o histórico em CSV
+    Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
+        ->name('audit-logs.export');
+
 });

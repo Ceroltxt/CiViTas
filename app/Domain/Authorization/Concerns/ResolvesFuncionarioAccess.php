@@ -15,7 +15,7 @@ trait ResolvesFuncionarioAccess
 {
     protected function profile(Funcionario $funcionario): AppProfile
     {
-        return AppProfile::fromCargoName($funcionario->cargo?->nome_cargo);
+        return $funcionario->workspaceProfile();
     }
 
     protected function isAdmin(Funcionario $funcionario): bool
