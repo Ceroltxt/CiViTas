@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Identity;
 
+use App\Rules\CpfRule;
+use App\Rules\ValidEmailDomainRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
@@ -11,9 +14,6 @@ class RegisterRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Prepara e normaliza os dados antes da validação.
-     */
     protected function prepareForValidation(): void
     {
         $merge = [];
@@ -30,14 +30,15 @@ class RegisterRequest extends FormRequest
             $merge['sobrenome'] = trim($this->sobrenome);
         }
 
+        if ($this->has('CPF') && is_string($this->CPF)) {
+            $merge['CPF'] = CpfRule::sanitize($this->CPF);
+        }
+
         if (! empty($merge)) {
             $this->merge($merge);
         }
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [
@@ -46,27 +47,19 @@ class RegisterRequest extends FormRequest
             'email' => [
                 'required',
                 'string',
-                'email',
+                'email:rfc',
                 'max:255',
                 'unique:funcionario,email',
+                new ValidEmailDomainRule(),
             ],
             'password' => ['required', 'string', 'min:8'],
             'departamento' => ['nullable', 'string', 'max:100'],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'nome.required' => 'O nome completo é obrigatório.',
-            'email.required' => 'O e-mail é obrigatório.',
-            'email.email' => 'Informe um endereço de e-mail real e válido.',
-            'email.unique' => 'Este e-mail já está cadastrado no sistema.',
-            'password.required' => 'A senha é obrigatória.',
-            'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
+            'CPF' => [
+                'nullable',
+                'string',
+                new CpfRule(),
+                Rule::unique('funcionario', 'CPF'),
+            ],
         ];
     }
 }

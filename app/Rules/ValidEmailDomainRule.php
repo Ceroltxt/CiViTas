@@ -52,7 +52,7 @@ class ValidEmailDomainRule implements ValidationRule
         }
 
         // Em testes automatizados, ignora consulta de rede DNS
-        if (! app()->runningUnitTests() && ! checkdnsrr($domain, 'MX') && ! checkdnsrr($domain, 'A')) {
+        if (! checkdnsrr($domain, 'MX') && ! checkdnsrr($domain, 'A')) {
             $fail('O domínio do e-mail informado não possui um servidor de e-mail ativo na internet (MX/A inexistente).');
         }
     }

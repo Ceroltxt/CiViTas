@@ -24,8 +24,7 @@ class TarefaPolicy
 
     public function create(Funcionario $funcionario): bool
     {
-        return $funcionario->hasPermission(Permissions::TASKS_CREATE)
-            || $funcionario->hasPermission(Permissions::TASKS_CREATE_PERSONAL);
+        return $funcionario->hasPermission(Permissions::TASKS_CREATE);
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Identity;
 
-use App\Rules\ValidEmailDomainRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ForgotPasswordRequest extends FormRequest
@@ -27,7 +26,7 @@ class ForgotPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email:rfc', new ValidEmailDomainRule],
+            'email' => ['required', 'string', 'email:rfc'],
         ];
     }
 

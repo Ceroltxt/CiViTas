@@ -24,6 +24,10 @@ class UpdateTaskRequest extends FormRequest
             'ID_projeto' => ['nullable', 'integer', 'exists:projeto,ID_projeto'],
             'ID_equipe' => ['nullable', 'integer', 'exists:equipe,ID_equipe'],
             'matricula_colaborador' => ['nullable'],
+            'data_fechamento_automatico' => [
+                'nullable',
+                'date',
+            ],
         ];
     }
 }

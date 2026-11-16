@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Gamification\TaskPointsService;
 use App\Application\Dashboard\DashboardService;
 use App\Domain\Authorization\AppProfile;
 use App\Http\Controllers\Controller;
@@ -14,6 +15,9 @@ use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\StatusTarefa;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
+use App\Models\Project\Projeto;
+use App\Models\Team\Equipe;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -32,108 +36,313 @@ class TaskController extends Controller
 
     public function store(CreateTaskRequest $request): JsonResponse
     {
-        Gate::authorize('create', Tarefa::class);
+        /** @var Funcionario $funcionario */
+        $funcionario = $request->user();
 
-        /** @var Funcionario $gestor */
-        $gestor = $request->user();
+        abort_unless(
+            app()->bound('workspace_id'),
+            403,
+            'Workspace ativo não identificado.'
+        );
 
-        $statusAFazer = StatusTarefa::query()->where('nome_status', 'a-fazer')->firstOrFail();
-        $colaboradores = array_filter((array) $request->validated('matricula_colaborador', []));
-        $isPessoal = $request->boolean('pessoal', false);
+        $workspaceId = (int) app('workspace_id');
+        $dados = $request->validated();
 
-        if ($request->filled('ID_projeto') || $request->filled('ID_equipe')) {
-            $isPessoal = false;
-        } elseif (empty($colaboradores)) {
-            $isPessoal = true;
+        $perfil = $funcionario->workspaceProfile();
+        $isPessoal = $perfil === AppProfile::Colaborador;
+
+        if ($isPessoal) {
+            Gate::authorize('createPersonal', Tarefa::class);
+
+            $projetoId = null;
+            $equipeId = null;
+            $colaboradores = [$funcionario->matricula_funcionario];
+        } else {
+            Gate::authorize('create', Tarefa::class);
+
+            $projetoId = $dados['ID_projeto'] ?? null;
+            $equipeId = $dados['ID_equipe'] ?? null;
+
+            if (! $projetoId && ! $equipeId) {
+                throw ValidationException::withMessages([
+                    'ID_projeto' => 'Informe um projeto ou uma equipe para a tarefa.',
+                ]);
+            }
+
+            $projeto = null;
+            $equipe = null;
+
+            if ($projetoId) {
+                $projeto = Projeto::query()
+                    ->whereHas('equipes', function ($query) use ($workspaceId) {
+                        $query->where('equipe.workspace_id', $workspaceId);
+                    })
+                    ->find($projetoId);
+
+                if (! $projeto) {
+                    throw ValidationException::withMessages([
+                        'ID_projeto' => 'O projeto não pertence ao workspace ativo.',
+                    ]);
+                }
+            }
+
+            if ($equipeId) {
+                $equipe = Equipe::query()
+                    ->where('workspace_id', $workspaceId)
+                    ->find($equipeId);
+
+                if (! $equipe) {
+                    throw ValidationException::withMessages([
+                        'ID_equipe' => 'A equipe não pertence ao workspace ativo.',
+                    ]);
+                }
+            }
+
+            if ($projeto && $equipe) {
+                $equipeAssociada = $projeto->equipes()
+                    ->where('equipe.ID_equipe', $equipe->ID_equipe)
+                    ->exists();
+
+                if (! $equipeAssociada) {
+                    throw ValidationException::withMessages([
+                        'ID_equipe' => 'A equipe informada não está associada ao projeto.',
+                    ]);
+                }
+            }
+
+            $colaboradores = array_values(array_unique(
+                array_filter(
+                    (array) ($dados['matricula_colaborador'] ?? [])
+                )
+            ));
+
+            if (empty($colaboradores)) {
+                $colaboradores = [$funcionario->matricula_funcionario];
+            }
+
+            $colaboradoresNoWorkspace = DB::table('workspace_funcionario')
+                ->where('workspace_id', $workspaceId)
+                ->whereIn('matricula_funcionario', $colaboradores)
+                ->pluck('matricula_funcionario')
+                ->map(fn ($matricula) => (string) $matricula)
+                ->all();
+
+            foreach ($colaboradores as $matricula) {
+                if (! in_array((string) $matricula, $colaboradoresNoWorkspace, true)) {
+                    throw ValidationException::withMessages([
+                        'matricula_colaborador' =>
+                            "O colaborador {$matricula} não pertence ao workspace ativo.",
+                    ]);
+                }
+            }
         }
 
-        if (empty($colaboradores)) {
-            $colaboradores = [$gestor->matricula_funcionario];
-        }
+        $statusAFazer = StatusTarefa::query()
+            ->where('nome_status', 'a-fazer')
+            ->firstOrFail();
 
         $tarefa = Tarefa::query()->create([
-            'nome' => $request->validated('nome'),
-            'descricao' => $request->validated('descricao'),
-            'prioridade' => $request->validated('prioridade'),
-            'data_prazo' => $request->validated('data_prazo'),
+            'nome' => $dados['nome'],
+            'descricao' => $dados['descricao'] ?? null,
+            'prioridade' => $dados['prioridade'],
+            'data_prazo' => $dados['data_prazo'],
             'data_inicio' => now(),
-            'pontos_base' => match ($request->validated('prioridade')) {
+            'pontos_base' => match ($dados['prioridade']) {
                 'alta' => 200,
                 'media' => 100,
                 default => 50,
             },
-            'pessoal' => $isPessoal,
-            'matricula_gestor' => $gestor->matricula_funcionario,
-            'ID_projeto' => $request->validated('ID_projeto'),
-            'ID_equipe' => $request->validated('ID_equipe'),
+            'pessoal' => DB::connection()->getDriverName() === 'pgsql'
+                ? ($isPessoal ? DB::raw('true') : DB::raw('false'))
+                : $isPessoal,
+            'matricula_gestor' => $funcionario->matricula_funcionario,
+            'ID_projeto' => $projetoId,
+            'ID_equipe' => $equipeId,
             'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
+            'data_fechamento_automatico' =>
+                $dados['data_fechamento_automatico'] ?? null,
         ]);
 
-        $tarefa->colaboradores()->syncWithoutDetaching($colaboradores);
+        $tarefa->colaboradores()->sync($colaboradores);
 
-        $subtarefas = (array) $request->validated('subtarefas', []);
-        foreach ($subtarefas as $sub) {
+        foreach (($dados['subtarefas'] ?? []) as $sub) {
             if (is_string($sub) && trim($sub) !== '') {
                 Subtarefa::query()->create([
                     'nome' => trim($sub),
                     'ID_tarefa' => $tarefa->ID_tarefa,
                     'concluida' => false,
-                    'matricula_colaborador' => reset($colaboradores) ?: $gestor->matricula_funcionario,
+                    'matricula_colaborador' => $colaboradores[0],
                 ]);
             }
         }
 
         HistoricoTarefa::query()->create([
-            'acao' => $isPessoal ? 'Tarefa pessoal criada' : 'Tarefa criada e atribuída',
-            'detalhes' => $isPessoal ? "Tarefa pessoal criada por {$gestor->nome}" : "Tarefa criada pelo gestor {$gestor->nome}",
+            'acao' => $isPessoal
+                ? 'Tarefa pessoal criada'
+                : 'Tarefa criada e atribuída',
+            'detalhes' => $isPessoal
+                ? "Tarefa pessoal criada por {$funcionario->nome}"
+                : "Tarefa criada pelo gestor {$funcionario->nome}",
             'ID_tarefa' => $tarefa->ID_tarefa,
-            'matricula_funcionario' => $gestor->matricula_funcionario,
+            'matricula_funcionario' => $funcionario->matricula_funcionario,
         ]);
 
-        return (new TaskResource($tarefa->fresh(['status', 'colaboradores', 'subtarefas'])))
+        return (new TaskResource(
+            $tarefa->fresh(['status', 'colaboradores', 'subtarefas'])
+        ))
             ->response()
             ->setStatusCode(201);
     }
 
     public function updateStatus(
-        UpdateTaskStatusRequest $request,
-        Tarefa $task
+    UpdateTaskStatusRequest $request,
+    Tarefa $task,
+    TaskPointsService $taskPoints
     ): TaskResource {
-        Gate::authorize('updateStatus', $task);
+        $taskId = $task->ID_tarefa;
 
-        /** @var Funcionario $funcionario */
-        $funcionario = $request->user();
+        return DB::transaction(function () use (
+            $request,
+            $taskId,
+            $taskPoints
+        ): TaskResource {
+            // Relê e bloqueia a tarefa antes de validar a transição.
+            $task = Tarefa::query()
+                ->where('ID_tarefa', $taskId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $statusSlug = $request->validated('status');
+            Gate::authorize('updateStatus', $task);
 
-        // Se for colaborador em tarefa de trabalho tentando marcar 'concluido', passa para 'em-revisao'
-        if ($statusSlug === 'concluido' && ! $task->pessoal) {
-            if ($funcionario->profile() === AppProfile::Colaborador) {
-                $statusSlug = 'em-revisao';
+            /** @var Funcionario $funcionario */
+            $funcionario = $request->user();
+
+            $perfil = $funcionario->workspaceProfile();
+            $isGestor = $perfil === AppProfile::Gestor;
+            $isColaborador = $perfil === AppProfile::Colaborador;
+
+            $statusSlug = $request->validated('status');
+
+            $task->loadMissing('status');
+            $statusAtual = $task->status?->nome_status;
+            $reabriuTarefa = $statusAtual === 'fechada';
+
+            // Fechar uma tarefa é uma ação exclusiva do gestor.
+            if ($statusSlug === 'fechada') {
+                abort_unless(
+                    $isGestor,
+                    403,
+                    'Somente o gestor pode fechar uma tarefa.'
+                );
+
+                abort_if(
+                    $task->data_conclusao !== null,
+                    422,
+                    'Uma tarefa já concluída não pode ser fechada como pendente.'
+                );
             }
-        }
 
-        $statusRecord = StatusTarefa::query()->where('nome_status', $statusSlug)->firstOrFail();
+            // Reabrir uma tarefa fechada é exclusivo do gestor.
+            if ($reabriuTarefa) {
+                abort_unless(
+                    $isGestor,
+                    403,
+                    'Somente o gestor pode reabrir uma tarefa fechada.'
+                );
 
-        $task->ID_status_tarefa = $statusRecord->ID_status_tarefa;
+                abort_if(
+                    $task->data_conclusao !== null,
+                    422,
+                    'Esta tarefa já foi concluída e não pode ser reaberta por este fluxo.'
+                );
 
-        if ($statusSlug === 'concluido') {
-            $task->data_conclusao = now();
-        } else {
-            $task->data_conclusao = null;
-        }
+                abort_unless(
+                    in_array($statusSlug, ['a-fazer', 'em-andamento'], true),
+                    422,
+                    'Ao reabrir uma tarefa, selecione a fazer ou em andamento.'
+                );
 
-        $task->save();
+                $task->foi_reaberta = true;
+                $task->quantidade_reaberturas =
+                    (int) $task->quantidade_reaberturas + 1;
+            }
 
-        HistoricoTarefa::query()->create([
-            'acao' => 'Status alterado',
-            'detalhes' => "Status alterado para '{$statusRecord->nome_status}'",
-            'ID_tarefa' => $task->ID_tarefa,
-            'matricula_funcionario' => $funcionario->matricula_funcionario,
-        ]);
+            // Tarefas de trabalho seguem o fluxo de revisão.
+            if (! $task->pessoal) {
+                if ($isColaborador) {
+                    abort_unless(
+                        in_array(
+                            $statusSlug,
+                            [
+                                'a-fazer',
+                                'em-andamento',
+                                'em-revisao',
+                                'concluido',
+                            ],
+                            true
+                        ),
+                        403,
+                        'Você não tem permissão para definir esse status.'
+                    );
 
-        return new TaskResource($task->fresh(['status', 'colaboradores', 'subtarefas']));
+                    // O colaborador solicita a conclusão; o gestor aprova.
+                    if ($statusSlug === 'concluido') {
+                        $statusSlug = 'em-revisao';
+                    }
+                }
+
+                // Apenas o gestor pode aprovar a conclusão de tarefas de trabalho.
+                if ($statusSlug === 'concluido') {
+                    abort_unless(
+                        $isGestor,
+                        403,
+                        'Somente o gestor pode aprovar a conclusão desta tarefa.'
+                    );
+                }
+            }
+
+            $statusRecord = StatusTarefa::query()
+                ->where('nome_status', $statusSlug)
+                ->firstOrFail();
+
+            $task->ID_status_tarefa = $statusRecord->ID_status_tarefa;
+
+            if ($statusSlug === 'concluido') {
+                $task->data_conclusao = now();
+            } elseif ($statusSlug !== 'fechada') {
+                $task->data_conclusao = null;
+            }
+
+            $task->save();
+
+            // A penalidade faz parte da mesma transação do status.
+            if ($reabriuTarefa) {
+                $taskPoints->penalizeReopening(
+                    $task,
+                    (int) $task->quantidade_reaberturas
+                );
+            }
+
+            // Registra a pontuação quando a conclusão é aprovada.
+            if ($statusSlug === 'concluido') {
+                $taskPoints->awardForCompletion($task);
+            }
+
+            // O histórico também precisa ser persistido na mesma transação.
+            HistoricoTarefa::query()->create([
+                'acao' => 'Status alterado',
+                'detalhes' => "Status alterado para '{$statusRecord->nome_status}'",
+                'ID_tarefa' => $task->ID_tarefa,
+                'matricula_funcionario' =>
+                    $funcionario->matricula_funcionario,
+            ]);
+
+            return new TaskResource(
+                $task->fresh(['status', 'colaboradores', 'subtarefas'])
+            );
+        });
     }
+
 
     public function show(Tarefa $task): TaskResource
     {
@@ -226,6 +435,10 @@ class TaskController extends Controller
         }
         if (array_key_exists('ID_equipe', $data)) {
             $task->ID_equipe = $data['ID_equipe'];
+        }
+
+        if (array_key_exists('data_fechamento_automatico', $data)) {
+            $task->data_fechamento_automatico = $data['data_fechamento_automatico'];
         }
 
         $task->save();

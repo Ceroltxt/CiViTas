@@ -27,7 +27,7 @@ test('new user can register successfully with valid cpf, receives welcome task a
     $response->assertCreated()
         ->assertJsonStructure(['message', 'funcionario'])
         ->assertJsonPath('funcionario.email', 'carlos.novo@gmail.com')
-        ->assertJsonPath('funcionario.app_role', 'colaborador')
+        ->assertJsonPath('funcionario.app_role', 'admin')
         ->assertJsonPath('funcionario.cpf', '11144477735');
 
     $funcionario = Funcionario::query()->where('email', 'carlos.novo@gmail.com')->first();

@@ -12,6 +12,7 @@ use App\Models\Project\Projeto;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
+use App\Domain\Authorization\Permissions;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
@@ -143,8 +144,19 @@ class Funcionario extends Authenticatable
         return AppProfile::fromCargoName($this->cargo?->nome_cargo);
     }
 
+    public function workspaceProfile(): AppProfile
+    {
+        if (app()->bound('workspace_role')) {
+            return AppProfile::tryFrom((string) app('workspace_role'))
+                ?? AppProfile::Colaborador;
+        }
+
+        return $this->profile();
+    }
+
     /**
-     * Verifica slug em `permissoes` via cargo (e overrides futuros em permissao_cargo_funcionario).
+     * Verifica se o funcionário possui determinada permissão
+     * conforme o papel do workspace ativo ou, fora dele, seu cargo.
      */
     public function hasPermission(string $slug): bool
     {
@@ -154,8 +166,15 @@ class Funcionario extends Authenticatable
     /**
      * @return SupportCollection<int, string>
      */
+
     public function permissionSlugs(): SupportCollection
     {
+        if (app()->bound('workspace_role')) {
+            $role = (string) app('workspace_role');
+
+            return collect(Permissions::forWorkspaceRole($role));
+        }
+
         $this->loadMissing('cargo.permissoes');
 
         if ($this->cargo === null) {
@@ -164,7 +183,12 @@ class Funcionario extends Authenticatable
 
         /** @var Collection<int, Permissao> $permissoes */
         $permissoes = $this->cargo->permissoes()
-            ->wherePivot('ativo', DB::connection()->getDriverName() === 'pgsql' ? DB::raw('true') : true)
+            ->wherePivot(
+                'ativo',
+                DB::connection()->getDriverName() === 'pgsql'
+                    ? DB::raw('true')
+                    : true
+            )
             ->get();
 
         return $permissoes->pluck('nome_permissao');
