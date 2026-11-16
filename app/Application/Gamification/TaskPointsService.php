@@ -14,10 +14,13 @@ class TaskPointsService
      */
     public function awardForCompletion(Tarefa $task): void
     {
-        if ($task->pessoal || ! $task->data_conclusao) {
+        if (
+            $task->pessoal ||
+            ! $task->data_conclusao ||
+            $task->foi_reaberta
+        ) {
             return;
         }
-
         $task->loadMissing('colaboradores');
 
         $prazo = $task->data_prazo?->toDateString();

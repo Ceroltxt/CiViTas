@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use App\Database\PostgresConnection;
+use Illuminate\Database\Connection;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,7 +30,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        Connection::resolverFor(
+            'pgsql',
+            function ($connection, $database, $prefix, $config) {
+                return new PostgresConnection(
+                    $connection,
+                    $database,
+                    $prefix,
+                    $config,
+                );
+            },
+        );
     }
 
     /**
