@@ -20,7 +20,7 @@ test('api status returns application metadata', function () {
         ->assertJson([
             'status' => 'ok',
             'database' => [
-                'connection' => 'sqlite',
+                'connection' => config('database.default'),
                 'connected' => true,
             ],
         ]);
