@@ -95,8 +95,6 @@ test('nao duplica a pontuacao ao processar a mesma conclusao duas vezes', functi
     )->toBe(1);
 });
 
-
-
 test('penaliza em dois pontos cada colaborador na primeira reabertura', function () {
     $this->tarefa->pessoal = false;
     $this->tarefa->data_conclusao = null;

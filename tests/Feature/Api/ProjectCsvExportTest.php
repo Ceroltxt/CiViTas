@@ -1,11 +1,11 @@
 <?php
 
 use App\Models\Identity\Funcionario;
-use App\Models\Workspace\Workspace;
-use App\Models\Team\Equipe;
-use App\Models\Task\Tarefa;
-use App\Models\Task\StatusTarefa;
 use App\Models\Project\Projeto;
+use App\Models\Task\StatusTarefa;
+use App\Models\Task\Tarefa;
+use App\Models\Team\Equipe;
+use App\Models\Workspace\Workspace;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;

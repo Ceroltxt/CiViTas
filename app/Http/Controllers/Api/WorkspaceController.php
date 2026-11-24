@@ -4,23 +4,24 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Identity\Funcionario;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class WorkspaceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $funcionario = $request->user();
-        
+
         // Se o usuário for um User (Laravel Sanctum), precisamos encontrar o Funcionario correspondente
-        if ($funcionario instanceof \App\Models\User) {
+        if ($funcionario instanceof User) {
             $funcionario = Funcionario::where('email', $funcionario->email)->first();
-            if (!$funcionario) {
+            if (! $funcionario) {
                 return response()->json([]);
             }
         }
-        
+
         $workspaces = $funcionario->workspaces()->get()->map(function ($workspace) {
             return [
                 'id' => $workspace->id,

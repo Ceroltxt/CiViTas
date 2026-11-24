@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Application\Gamification\TaskPointsService;
 use App\Application\Dashboard\DashboardService;
+use App\Application\Gamification\TaskPointsService;
 use App\Domain\Authorization\AppProfile;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\CreateTaskRequest;
@@ -11,18 +11,18 @@ use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Http\Resources\Frontend\TaskResource;
 use App\Models\Identity\Funcionario;
+use App\Models\Project\Projeto;
 use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\StatusTarefa;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
-use App\Models\Project\Projeto;
 use App\Models\Team\Equipe;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
 {
@@ -130,8 +130,7 @@ class TaskController extends Controller
             foreach ($colaboradores as $matricula) {
                 if (! in_array((string) $matricula, $colaboradoresNoWorkspace, true)) {
                     throw ValidationException::withMessages([
-                        'matricula_colaborador' =>
-                            "O colaborador {$matricula} não pertence ao workspace ativo.",
+                        'matricula_colaborador' => "O colaborador {$matricula} não pertence ao workspace ativo.",
                     ]);
                 }
             }
@@ -159,8 +158,7 @@ class TaskController extends Controller
             'ID_projeto' => $projetoId,
             'ID_equipe' => $equipeId,
             'ID_status_tarefa' => $statusAFazer->ID_status_tarefa,
-            'data_fechamento_automatico' =>
-                $dados['data_fechamento_automatico'] ?? null,
+            'data_fechamento_automatico' => $dados['data_fechamento_automatico'] ?? null,
         ]);
 
         $tarefa->colaboradores()->sync($colaboradores);
@@ -195,9 +193,9 @@ class TaskController extends Controller
     }
 
     public function updateStatus(
-    UpdateTaskStatusRequest $request,
-    Tarefa $task,
-    TaskPointsService $taskPoints
+        UpdateTaskStatusRequest $request,
+        Tarefa $task,
+        TaskPointsService $taskPoints
     ): TaskResource {
         $taskId = $task->ID_tarefa;
 
@@ -333,8 +331,7 @@ class TaskController extends Controller
                 'acao' => 'Status alterado',
                 'detalhes' => "Status alterado para '{$statusRecord->nome_status}'",
                 'ID_tarefa' => $task->ID_tarefa,
-                'matricula_funcionario' =>
-                    $funcionario->matricula_funcionario,
+                'matricula_funcionario' => $funcionario->matricula_funcionario,
             ]);
 
             return new TaskResource(
@@ -342,7 +339,6 @@ class TaskController extends Controller
             );
         });
     }
-
 
     public function show(Tarefa $task): TaskResource
     {

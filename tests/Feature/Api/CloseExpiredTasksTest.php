@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Gamification\PontosUsuario;
 use App\Models\Identity\Funcionario;
 use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\StatusTarefa;
@@ -7,7 +8,6 @@ use App\Models\Task\Tarefa;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
-use App\Models\Gamification\PontosUsuario;
 
 uses(RefreshDatabase::class);
 
@@ -47,9 +47,9 @@ test('fecha automaticamente tarefa cujo horario foi atingido', function () {
     )->toBe(1);
 
     $historico = HistoricoTarefa::query()
-    ->where('ID_tarefa', $tarefa->ID_tarefa)
-    ->where('acao', 'Fechamento automático da tarefa')
-    ->firstOrFail();
+        ->where('ID_tarefa', $tarefa->ID_tarefa)
+        ->where('acao', 'Fechamento automático da tarefa')
+        ->firstOrFail();
 
     expect($historico->detalhes)
         ->toContain('Tarefa fechada automaticamente.');
@@ -128,7 +128,6 @@ test('nao registra fechamento automatico duplicado', function () {
             ->count()
     )->toBe(1);
 });
-
 
 test('fechamento automatico nao altera pontuacao nem cria registros', function () {
     $tarefa = Tarefa::query()

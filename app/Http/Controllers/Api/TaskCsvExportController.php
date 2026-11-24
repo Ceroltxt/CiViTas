@@ -7,7 +7,6 @@ use App\Models\Task\Tarefa;
 use App\Support\Export\TaskCsvExporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\ValidationException;
 
 class TaskCsvExportController extends Controller
 {

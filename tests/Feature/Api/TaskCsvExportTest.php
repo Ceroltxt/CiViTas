@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\Identity\Funcionario;
+use App\Models\Project\Projeto;
+use App\Models\Task\StatusTarefa;
 use App\Models\Task\Tarefa;
-use App\Models\Workspace\Workspace;
 use App\Models\Team\Equipe;
+use App\Models\Workspace\Workspace;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -77,11 +79,11 @@ test('export does not include tasks directly assigned to another workspace team'
         ->where('nome', 'Workspace Padrão')
         ->firstOrFail();
 
-    $projeto = \App\Models\Project\Projeto::query()
+    $projeto = Projeto::query()
         ->where('nome', 'Nova Praça Central')
         ->firstOrFail();
 
-    $status = \App\Models\Task\StatusTarefa::query()
+    $status = StatusTarefa::query()
         ->where('nome_status', 'a-fazer')
         ->firstOrFail();
 
@@ -141,7 +143,7 @@ test('export includes tasks that were in progress during the selected period', f
         ->where('nome', 'Workspace Padrão')
         ->firstOrFail();
 
-    $projeto = \App\Models\Project\Projeto::query()
+    $projeto = Projeto::query()
         ->where('nome', 'Nova Praça Central')
         ->firstOrFail();
 
@@ -149,7 +151,7 @@ test('export includes tasks that were in progress during the selected period', f
         ->where('workspace_id', $workspace->id)
         ->firstOrFail();
 
-    $status = \App\Models\Task\StatusTarefa::query()
+    $status = StatusTarefa::query()
         ->where('nome_status', 'concluido')
         ->firstOrFail();
 

@@ -50,14 +50,14 @@ class RegisterRequest extends FormRequest
                 'email:rfc',
                 'max:255',
                 'unique:funcionario,email',
-                new ValidEmailDomainRule(),
+                new ValidEmailDomainRule,
             ],
             'password' => ['required', 'string', 'min:8'],
             'departamento' => ['nullable', 'string', 'max:100'],
             'CPF' => [
                 'nullable',
                 'string',
-                new CpfRule(),
+                new CpfRule,
                 Rule::unique('funcionario', 'CPF'),
             ],
         ];

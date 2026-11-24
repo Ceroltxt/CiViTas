@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Workspace\Workspace;
 use App\Domain\Authorization\AppProfile;
 use App\Models\Identity\Funcionario;
 use App\Models\Organization\Cargo;
@@ -13,6 +12,7 @@ use App\Models\Task\StatusTarefa;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
+use App\Models\Workspace\Workspace;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -123,7 +123,6 @@ class DomainSeeder extends Seeder
                 ],
             );
         }
-
 
         $projeto = Projeto::query()->updateOrCreate(
             ['nome' => 'Nova Praça Central'],

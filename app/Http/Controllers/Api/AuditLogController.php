@@ -78,7 +78,7 @@ class AuditLogController extends Controller
             );
         }
 
-        $filename = 'historico-' . now()->format('Y-m-d-His') . '.csv';
+        $filename = 'historico-'.now()->format('Y-m-d-His').'.csv';
 
         return response()->streamDownload(function () use ($query): void {
             $output = fopen('php://output', 'w');
@@ -100,7 +100,7 @@ class AuditLogController extends Controller
                         /** @var HistoricoTarefa $log */
                         $user = $log->funcionario
                             ? trim(
-                                $log->funcionario->nome . ' ' .
+                                $log->funcionario->nome.' '.
                                 $log->funcionario->sobrenome
                             )
                             : 'Sistema';

@@ -3,6 +3,7 @@
 namespace App\Models\Identity;
 
 use App\Domain\Authorization\AppProfile;
+use App\Domain\Authorization\Permissions;
 use App\Models\Authorization\Permissao;
 use App\Models\Authorization\PermissaoCargo;
 use App\Models\Gamification\PontosUsuario;
@@ -12,7 +13,7 @@ use App\Models\Project\Projeto;
 use App\Models\Task\Subtarefa;
 use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
-use App\Domain\Authorization\Permissions;
+use App\Models\Workspace\Workspace;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
@@ -130,7 +131,7 @@ class Funcionario extends Authenticatable
     public function workspaces(): BelongsToMany
     {
         return $this->belongsToMany(
-            \App\Models\Workspace\Workspace::class,
+            Workspace::class,
             'workspace_funcionario',
             'matricula_funcionario',
             'workspace_id'
@@ -166,7 +167,6 @@ class Funcionario extends Authenticatable
     /**
      * @return SupportCollection<int, string>
      */
-
     public function permissionSlugs(): SupportCollection
     {
         if (app()->bound('workspace_role')) {

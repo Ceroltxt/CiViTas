@@ -70,8 +70,8 @@ class TaskCsvImporter
         $imported = DB::transaction(function () use (
             $rows,
             $funcionario,
-            $statusId,
-            $workspaceId
+            $statusId
+
         ) {
             $createdTasks = [];
 
@@ -139,7 +139,7 @@ class TaskCsvImporter
             'valid' => true,
             'total_rows' => count($rows),
             'imported_rows' => count($imported),
-            'message' => count($imported) . ' tarefa(s) importada(s) com sucesso.',
+            'message' => count($imported).' tarefa(s) importada(s) com sucesso.',
             'task_ids' => $imported,
         ];
     }

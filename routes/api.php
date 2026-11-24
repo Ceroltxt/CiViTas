@@ -9,22 +9,27 @@ use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectCsvExportController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TaskCsvExportController;
 use App\Http\Controllers\Api\TaskCsvImportController;
 use App\Http\Controllers\Api\TeamController;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Controllers\Api\WorkspaceInviteController;
+use App\Models\Identity\Funcionario;
+use App\Models\Team\Equipe;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/status', StatusController::class)->name('status');
-Route::get('/temp-users', function() {
-    return \App\Models\Identity\Funcionario::select('matricula_funcionario', 'nome', 'sobrenome')->get();
+Route::get('/temp-users', function () {
+    return Funcionario::select('matricula_funcionario', 'nome', 'sobrenome')->get();
 });
-Route::post('/teams-test', function(\Illuminate\Http\Request $request) {
+Route::post('/teams-test', function (Request $request) {
     try {
         $data = $request->all();
-        $team = \App\Models\Team\Equipe::create([
+        $team = Equipe::create([
             'nome' => $data['nome'],
             'matricula_gestor' => $data['matricula_gestor'],
             'pontos_totais' => 0,
@@ -35,8 +40,9 @@ Route::post('/teams-test', function(\Illuminate\Http\Request $request) {
         if (! empty($data['membros'])) {
             $team->membros()->sync($data['membros']);
         }
+
         return $team;
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
     }
 });
@@ -75,7 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     // Exportar projetos em CSV
-    Route::get('/projects/export', \App\Http\Controllers\Api\ProjectCsvExportController::class)
+    Route::get('/projects/export', ProjectCsvExportController::class)
         ->name('projects.export');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
@@ -94,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
 
     // Exportar tarefas em CSV
-    Route::get('/tasks/export', \App\Http\Controllers\Api\TaskCsvExportController::class)
+    Route::get('/tasks/export', TaskCsvExportController::class)
         ->name('tasks.export');
 
     // Importar tarefas em CSV

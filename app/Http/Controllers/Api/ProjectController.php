@@ -8,6 +8,7 @@ use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\Frontend\ProjectProgressResource;
 use App\Models\Identity\Funcionario;
 use App\Models\Project\Projeto;
+use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,7 +45,6 @@ class ProjectController extends Controller
                 'ativo' => DB::raw('true'),
                 'ID_matricula_admin' => $user->matricula_funcionario,
             ]);
-
 
             return $proj;
         });
@@ -96,13 +96,13 @@ class ProjectController extends Controller
             foreach ($project->equipes as $equipe) {
                 // Remove os membros da equipe
                 $equipe->membros()->detach();
-                
+
                 // Exclui todas as tarefas vinculadas à equipe
-                \App\Models\Task\Tarefa::where('ID_equipe', $equipe->ID_equipe)->delete();
-                
+                Tarefa::where('ID_equipe', $equipe->ID_equipe)->delete();
+
                 // Remove a equipe de outros projetos (embora vá ser excluída)
                 $equipe->projetos()->detach();
-                
+
                 // Exclui a equipe
                 $equipe->delete();
             }

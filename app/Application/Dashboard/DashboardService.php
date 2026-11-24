@@ -2,19 +2,18 @@
 
 namespace App\Application\Dashboard;
 
-use App\Http\Resources\Frontend\RankingEntryResource;
+use App\Domain\Authorization\AppProfile;
 use App\Http\Resources\Frontend\UserSummaryResource;
+use App\Models\Gamification\PontosUsuario;
 use App\Models\Identity\Funcionario;
 use App\Models\Project\Projeto;
 use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
 use App\Support\Frontend\TaskQueryBuilder;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Domain\Authorization\AppProfile;
-use App\Models\Gamification\PontosUsuario;
-use Carbon\Carbon;
 
 class DashboardService
 {
@@ -93,10 +92,11 @@ class DashboardService
      * @return list<array<string, mixed>>
      */
 
-/**
- * @return list<array<string, mixed>>
- */
-    public function ranking(?string $mes = null): array{
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function ranking(?string $mes = null): array
+    {
         $inicio = Carbon::createFromFormat('!Y-m', $mes ?? now()->format('Y-m'));
         $fim = $inicio->copy()->addMonth();
 
@@ -112,8 +112,7 @@ class DashboardService
             ->with('cargo')
             ->get()
             ->filter(
-                fn (Funcionario $funcionario) =>
-                    $funcionario->profile() === AppProfile::Colaborador
+                fn (Funcionario $funcionario) => $funcionario->profile() === AppProfile::Colaborador
             )
             ->map(function (Funcionario $funcionario) use ($pontuacoes): array {
                 return [
@@ -315,7 +314,6 @@ class DashboardService
             ->with(['status', 'colaboradores.cargo', 'subtarefas', 'projeto', 'equipe'])
             ->get();
     }
-
 
     public function auditLogs(
         Funcionario $funcionario,

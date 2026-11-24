@@ -100,8 +100,7 @@ class ProjectCsvExporter
 
                         $concluidas = $tarefas
                             ->filter(
-                                fn (Tarefa $tarefa) =>
-                                    $tarefa->status?->nome_status === 'concluido'
+                                fn (Tarefa $tarefa) => $tarefa->status?->nome_status === 'concluido'
                             )
                             ->count();
 
@@ -116,7 +115,7 @@ class ProjectCsvExporter
 
                         $administrador = $projeto->admin
                             ? trim(
-                                $projeto->admin->nome . ' ' .
+                                $projeto->admin->nome.' '.
                                 $projeto->admin->sobrenome
                             )
                             : '';
@@ -141,7 +140,7 @@ class ProjectCsvExporter
 
                 fclose($output);
             },
-            'projetos-' . now()->format('Y-m-d-His') . '.csv',
+            'projetos-'.now()->format('Y-m-d-His').'.csv',
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
                 'Cache-Control' => 'no-store, no-cache',

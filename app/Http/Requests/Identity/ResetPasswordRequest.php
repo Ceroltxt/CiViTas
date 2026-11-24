@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Identity;
 
-use App\Rules\ValidEmailDomainRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ResetPasswordRequest extends FormRequest

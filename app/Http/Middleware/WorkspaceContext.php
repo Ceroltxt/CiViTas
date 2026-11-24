@@ -4,8 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 class WorkspaceContext
 {
@@ -15,7 +15,7 @@ class WorkspaceContext
         $workspaceId = $request->header('X-Workspace-Id');
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
@@ -23,7 +23,7 @@ class WorkspaceContext
         if ($request->is('api/workspaces*') || $request->is('api/invites/*/accept') || $request->is('api/auth/*')) {
             return $next($request);
         }
-        if (!$workspaceId) {
+        if (! $workspaceId) {
             $primeiroWorkspace = DB::table('workspace_funcionario')
                 ->where('matricula_funcionario', $user->matricula_funcionario)
                 ->first();
@@ -33,7 +33,7 @@ class WorkspaceContext
             }
         }
 
-        if (!$workspaceId) {
+        if (! $workspaceId) {
             return response()->json(['message' => 'Workspace não informado ou usuário sem workspace.'], 403);
         }
 
@@ -43,14 +43,14 @@ class WorkspaceContext
             ->where('matricula_funcionario', $user->matricula_funcionario)
             ->first();
 
-        if (!$roleInfo) {
+        if (! $roleInfo) {
             return response()->json(['message' => 'Acesso negado a este Workspace.'], 403);
         }
 
         // Injeta no container global e na request para os Controllers/Scopes usarem
         app()->instance('workspace_id', (int) $workspaceId);
         app()->instance('workspace_role', $roleInfo->role);
-        
+
         $request->attributes->set('workspace_id', (int) $workspaceId);
         $request->attributes->set('workspace_role', $roleInfo->role);
 

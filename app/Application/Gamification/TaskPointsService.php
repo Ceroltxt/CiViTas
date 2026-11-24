@@ -2,8 +2,8 @@
 
 namespace App\Application\Gamification;
 
-use App\Models\Task\Tarefa;
 use App\Models\Gamification\PontosUsuario;
+use App\Models\Task\Tarefa;
 use Illuminate\Support\Facades\DB;
 
 class TaskPointsService
@@ -115,8 +115,7 @@ class TaskPointsService
                         'pontos' => -2,
                         'acao' => 'Penalidade por reabertura de tarefa',
                         'data' => now(),
-                        'matricula_funcionario' =>
-                            $colaborador->matricula_funcionario,
+                        'matricula_funcionario' => $colaborador->matricula_funcionario,
                         'ID_tarefa' => $tarefaAtualizada->ID_tarefa,
                     ]
                 );

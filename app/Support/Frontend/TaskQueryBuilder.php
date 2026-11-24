@@ -36,7 +36,7 @@ class TaskQueryBuilder
         if ($workspaceId) {
             $query->where(function (Builder $q) use ($workspaceId, $trueVal) {
                 $q->whereHas('equipe', fn ($eq) => $eq->where('workspace_id', $workspaceId))
-                  ->orWhere('pessoal', $trueVal);
+                    ->orWhere('pessoal', $trueVal);
             });
         }
 
@@ -45,9 +45,9 @@ class TaskQueryBuilder
         if ($role !== 'admin') {
             $query->where(function (Builder $q) use ($matricula, $trueVal): void {
                 $q->whereHas(
-                        'colaboradores',
-                        fn (Builder $sq) => $sq->where('tarefa_funcionario.matricula_colaborador', $matricula),
-                    )
+                    'colaboradores',
+                    fn (Builder $sq) => $sq->where('tarefa_funcionario.matricula_colaborador', $matricula),
+                )
                     ->orWhere('matricula_gestor', $matricula)
                     ->orWhere(function (Builder $sq) use ($matricula, $trueVal): void {
                         $sq->where('pessoal', $trueVal)->where('matricula_gestor', $matricula);

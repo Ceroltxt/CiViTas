@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Workspace\WorkspaceInvite;
 use App\Models\Workspace\Workspace;
-use Illuminate\Http\Request;
+use App\Models\Workspace\WorkspaceInvite;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class WorkspaceInviteController extends Controller
 {

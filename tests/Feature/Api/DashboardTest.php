@@ -1,13 +1,12 @@
 <?php
 
+use App\Domain\Authorization\AppProfile;
+use App\Models\Gamification\PontosUsuario;
 use App\Models\Identity\Funcionario;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
-use App\Domain\Authorization\AppProfile;
-use App\Models\Gamification\PontosUsuario;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
@@ -65,8 +64,7 @@ test('ranking mensal inclui colaboradores com pontuação positiva e negativa', 
         ->with('cargo')
         ->get()
         ->filter(
-            fn (Funcionario $funcionario) =>
-                $funcionario->profile() === AppProfile::Colaborador
+            fn (Funcionario $funcionario) => $funcionario->profile() === AppProfile::Colaborador
         )
         ->values();
 
@@ -93,7 +91,7 @@ test('ranking mensal inclui colaboradores com pontuação positiva e negativa', 
         'chave_idempotencia' => 'teste-ranking-negativo',
     ]);
 
-    Cache::forget('dashboard_ranking_' . now()->format('Y-m'));
+    Cache::forget('dashboard_ranking_'.now()->format('Y-m'));
 
     $response = $this->getJson(route('api.dashboard.ranking', [
         'month' => now()->format('Y-m'),
@@ -137,8 +135,7 @@ test('ranking mensal mantém as pontuações de cada mês independentes', functi
         ->with('cargo')
         ->get()
         ->first(
-            fn (Funcionario $funcionario) =>
-                $funcionario->profile() === AppProfile::Colaborador
+            fn (Funcionario $funcionario) => $funcionario->profile() === AppProfile::Colaborador
         );
 
     expect($colaborador)->not->toBeNull();
@@ -162,8 +159,8 @@ test('ranking mensal mantém as pontuações de cada mês independentes', functi
         'chave_idempotencia' => 'teste-ranking-mes-anterior',
     ]);
 
-    Cache::forget('dashboard_ranking_' . $mesAtual->format('Y-m'));
-    Cache::forget('dashboard_ranking_' . $mesAnterior->format('Y-m'));
+    Cache::forget('dashboard_ranking_'.$mesAtual->format('Y-m'));
+    Cache::forget('dashboard_ranking_'.$mesAnterior->format('Y-m'));
 
     $responseAtual = $this->getJson(route('api.dashboard.ranking', [
         'month' => $mesAtual->format('Y-m'),
@@ -198,8 +195,7 @@ test('ranking mensal compartilha posições em caso de empate', function () {
         ->with('cargo')
         ->get()
         ->filter(
-            fn (Funcionario $funcionario) =>
-                $funcionario->profile() === AppProfile::Colaborador
+            fn (Funcionario $funcionario) => $funcionario->profile() === AppProfile::Colaborador
         )
         ->values();
 
@@ -239,7 +235,7 @@ test('ranking mensal compartilha posições em caso de empate', function () {
         ]);
     }
 
-    Cache::forget('dashboard_ranking_' . $mes->format('Y-m'));
+    Cache::forget('dashboard_ranking_'.$mes->format('Y-m'));
 
     $response = $this->getJson(route('api.dashboard.ranking', [
         'month' => $mes->format('Y-m'),
@@ -282,7 +278,7 @@ test('ranking mensal inclui colaboradores sem pontuacao', function () {
 
     $mes = now()->startOfMonth();
 
-    Cache::forget('dashboard_ranking_' . $mes->format('Y-m'));
+    Cache::forget('dashboard_ranking_'.$mes->format('Y-m'));
 
     $response = $this->getJson(route('api.dashboard.ranking', [
         'month' => $mes->format('Y-m'),

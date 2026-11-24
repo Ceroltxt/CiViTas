@@ -11,20 +11,29 @@ namespace App\Domain\Authorization;
 final class Permissions
 {
     public const TASKS_VIEW = 'tasks.view';
+
     public const TASKS_CREATE = 'tasks.create';
+
     public const TASKS_CREATE_PERSONAL = 'tasks.create-personal';
+
     public const TASKS_UPDATE = 'tasks.update';
+
     public const TASKS_DELETE = 'tasks.delete';
+
     public const TASKS_ASSIGN = 'tasks.assign';
+
     public const TASKS_ATTACH = 'tasks.attach';
 
     public const PROJECTS_VIEW = 'projects.view';
+
     public const PROJECTS_MANAGE = 'projects.manage';
 
     public const TEAMS_VIEW = 'teams.view';
+
     public const TEAMS_MANAGE = 'teams.manage';
 
     public const ACCESS_VIEW = 'admin.access.view';
+
     public const ACCESS_MANAGE = 'admin.access.manage';
 
     public static function all(): array

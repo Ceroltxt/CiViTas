@@ -9,10 +9,12 @@ use App\Http\Requests\Team\UpdateTeamRequest;
 use App\Http\Resources\Frontend\TeamSummaryResource;
 use App\Http\Resources\Frontend\UserSummaryResource;
 use App\Models\Identity\Funcionario;
+use App\Models\Task\Tarefa;
 use App\Models\Team\Equipe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -28,9 +30,10 @@ class TeamController extends Controller
 
     public function gestores(): AnonymousResourceCollection
     {
-        $gestores = \Illuminate\Support\Facades\Cache::remember('gestores_list_v1', 60, function () {
+        $gestores = Cache::remember('gestores_list_v1', 60, function () {
             return Funcionario::with('cargo')->get()->filter(function ($f) {
                 $cargo = mb_strtolower(trim($f->cargo?->nome_cargo ?? ''));
+
                 return in_array($cargo, ['gestor', 'admin', 'administrador']) ||
                        in_array($f->email, ['gestor@civitas.test', 'admin@civitas.test']);
             })->values();
@@ -67,7 +70,8 @@ class TeamController extends Controller
                 ->response()
                 ->setStatusCode(201);
         } catch (\Exception $e) {
-            \Log::error('Erro ao criar equipe no TeamController: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            \Log::error('Erro ao criar equipe no TeamController: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -104,7 +108,7 @@ class TeamController extends Controller
 
         DB::transaction(function () use ($team) {
             // Se tiver tarefas, precisa apagar
-            \App\Models\Task\Tarefa::where('ID_equipe', $team->ID_equipe)->delete();
+            Tarefa::where('ID_equipe', $team->ID_equipe)->delete();
             $team->membros()->detach();
             $team->projetos()->detach();
             $team->delete();
@@ -166,10 +170,11 @@ class TeamController extends Controller
 
     public function colaboradores(): AnonymousResourceCollection
     {
-        $colaboradores = \Illuminate\Support\Facades\Cache::remember('colaboradores_list_v1', 60, function () {
+        $colaboradores = Cache::remember('colaboradores_list_v1', 60, function () {
             return Funcionario::with('cargo')->get()->filter(function ($f) {
                 $cargo = mb_strtolower(trim($f->cargo?->nome_cargo ?? ''));
-                return !in_array($cargo, ['admin', 'administrador']);
+
+                return ! in_array($cargo, ['admin', 'administrador']);
             })->values();
         });
 

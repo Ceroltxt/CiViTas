@@ -1,5 +1,6 @@
 <?php
 
+use App\Application\Gamification\TaskPointsService;
 use App\Models\Identity\Funcionario;
 use App\Models\Task\HistoricoTarefa;
 use App\Models\Task\StatusTarefa;
@@ -94,7 +95,6 @@ test('unauthenticated request to update task status is rejected', function () {
     ])->assertUnauthorized();
 });
 
-
 test('gestor reabre tarefa fechada e aplica penalidade aos colaboradores', function () {
     $gestor = Funcionario::query()
         ->where('email', 'gestor@civitas.test')
@@ -166,7 +166,6 @@ test('colaborador nao pode reabrir tarefa fechada', function () {
     expect((int) $tarefa->fresh()->quantidade_reaberturas)->toBe(0);
 });
 
-
 test('rollback mantem tarefa fechada se a penalidade falhar', function () {
     $gestor = Funcionario::query()
         ->where('email', 'gestor@civitas.test')
@@ -194,15 +193,15 @@ test('rollback mantem tarefa fechada se a penalidade falhar', function () {
         ->count();
 
     $taskPoints = Mockery::mock(
-        \App\Application\Gamification\TaskPointsService::class
+        TaskPointsService::class
     );
 
     $taskPoints->shouldReceive('penalizeReopening')
         ->once()
-        ->andThrow(new \RuntimeException('Falha simulada na penalidade'));
+        ->andThrow(new RuntimeException('Falha simulada na penalidade'));
 
     $this->app->instance(
-        \App\Application\Gamification\TaskPointsService::class,
+        TaskPointsService::class,
         $taskPoints
     );
 
@@ -213,7 +212,7 @@ test('rollback mantem tarefa fechada se a penalidade falhar', function () {
             ]),
             ['status' => 'em-andamento']
         );
-    } catch (\RuntimeException $exception) {
+    } catch (RuntimeException $exception) {
         expect($exception->getMessage())
             ->toBe('Falha simulada na penalidade');
     }

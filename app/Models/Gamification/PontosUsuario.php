@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'matricula_funcionario',
     'ID_tarefa',
     'chave_idempotencia',
-    ])]
+])]
 class PontosUsuario extends Model
 {
     protected $table = 'pontos_usuario';

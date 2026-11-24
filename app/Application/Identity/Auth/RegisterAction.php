@@ -8,6 +8,7 @@ use App\Models\Organization\Cargo;
 use App\Models\Organization\Departamento;
 use App\Models\Task\StatusTarefa;
 use App\Models\Task\Tarefa;
+use App\Models\Workspace\Workspace;
 use Illuminate\Support\Facades\DB;
 
 class RegisterAction
@@ -46,8 +47,8 @@ class RegisterAction
             ]);
 
             // Criar workspace pessoal para o novo usuário com papel de admin
-            $workspace = \App\Models\Workspace\Workspace::query()->create([
-                'nome' => 'Workspace de ' . $primeiroNome,
+            $workspace = Workspace::query()->create([
+                'nome' => 'Workspace de '.$primeiroNome,
             ]);
 
             DB::table('workspace_funcionario')->insert([

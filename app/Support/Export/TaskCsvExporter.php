@@ -78,12 +78,12 @@ class TaskCsvExporter
                         }
 
                         $gestor = $tarefa->gestor
-                            ? trim($tarefa->gestor->nome . ' ' . $tarefa->gestor->sobrenome)
+                            ? trim($tarefa->gestor->nome.' '.$tarefa->gestor->sobrenome)
                             : '';
 
                         $colaboradores = $tarefa->colaboradores
                             ->map(fn ($colaborador) => trim(
-                                $colaborador->nome . ' ' . $colaborador->sobrenome
+                                $colaborador->nome.' '.$colaborador->sobrenome
                             ))
                             ->filter()
                             ->implode('|');
@@ -113,7 +113,7 @@ class TaskCsvExporter
 
                 fclose($output);
             },
-            'tarefas-' . now()->format('Y-m-d-His') . '.csv',
+            'tarefas-'.now()->format('Y-m-d-His').'.csv',
             [
                 'Content-Type' => 'text/csv; charset=UTF-8',
                 'Cache-Control' => 'no-store, no-cache',

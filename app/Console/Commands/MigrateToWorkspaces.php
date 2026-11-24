@@ -2,16 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\Workspace\Workspace;
+use App\Domain\Authorization\AppProfile;
 use App\Models\Identity\Funcionario;
 use App\Models\Team\Equipe;
+use App\Models\Workspace\Workspace;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use App\Domain\Authorization\AppProfile;
 
 class MigrateToWorkspaces extends Command
 {
     protected $signature = 'app:migrate-to-workspaces';
+
     protected $description = 'Migra os dados atuais (sem workspace) para um Workspace Padrão';
 
     public function handle()
@@ -31,7 +32,7 @@ class MigrateToWorkspaces extends Command
 
             foreach ($funcionarios as $f) {
                 // Determina o papel atual com base no cargo legado
-                $legacyProfile = $f->profile(); 
+                $legacyProfile = $f->profile();
                 $role = match ($legacyProfile) {
                     AppProfile::Admin => 'admin',
                     AppProfile::Gestor => 'gestor',
@@ -44,7 +45,7 @@ class MigrateToWorkspaces extends Command
                     ->where('matricula_funcionario', $f->matricula_funcionario)
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     DB::table('workspace_funcionario')->insert([
                         'workspace_id' => $workspace->id,
                         'matricula_funcionario' => $f->matricula_funcionario,
@@ -60,7 +61,7 @@ class MigrateToWorkspaces extends Command
             // 3. Vincular todos os quadros (equipes) ao Workspace Padrão
             $equipesAtualizadas = Equipe::whereNull('workspace_id')
                 ->update(['workspace_id' => $workspace->id]);
-                
+
             $this->info("{$equipesAtualizadas} quadros (equipes) atualizados para o Workspace Padrão.");
         });
 
